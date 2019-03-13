@@ -12,20 +12,28 @@ ros workspace to simulate imav2019 indor
 
 ----
 #### Prerequisites
-* [install ros](http://wiki.ros.org/kinetic/Installation/Ubuntu)
-* [install sphinx](https://github.com/Insper/bebop_sphinx)
+* [install ros](http://wiki.ros.org/kinetic/Installation/Ubuntu) (check documentation)
 
-#### Install
+
+
+#### Install Repo
 -----
 clone repo
 ```
 cd ~/
-git clone https://github.com/SkyRats/catkin_ws_bebop
+git clone --recurse-submodules https://github.com/SkyRats/catkin_ws_bebop
+```
+install sphinx:
+```
+. ~/catkin_ws_bebop/install.sh
 ```
 
 build catkin workspace
 ```
 cd ~/catkin_ws_bebop/
+git clone https://github.com/AutonomyLab/bebop_autonomy.git src/bebop_autonomy
+rosdep update
+rosdep install --from-paths src -i
 catkin build
 ```
 ----
