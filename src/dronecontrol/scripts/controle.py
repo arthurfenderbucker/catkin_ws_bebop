@@ -13,8 +13,8 @@ from dronecontrol.msg import Vector3D
 goal_pose = PoseStamped()
 current_pose = PoseStamped()
 set_velocity = TwistStamped()
-current_state = State()
-
+# current_state = State()
+current_state = None
 control_mode = "position"
 
 
@@ -94,17 +94,17 @@ altitude_hold()
 
 # arm = rospy.ServiceProxy('/mavros/cmd/arming',
 #                          mavros_msgs.srv.CommandBool)
-set_mode = rospy.ServiceProxy(
-    '/mavros/set_mode', mavros_msgs.srv.SetMode)
+# set_mode = rospy.ServiceProxy(
+#     '/mavros/set_mode', mavros_msgs.srv.SetMode)
 
-for i in range(300):  # arm and takeoff
-    local_position_pub.publish(goal_pose)
-    rate.sleep()
+# for i in range(300):  # arm and takeoff
+    # local_position_pub.publish(goal_pose)
+    # rate.sleep()
 
 while not rospy.is_shutdown():
 
-    if control_mode == "position":
-        local_position_pub.publish(goal_pose)
+    # if control_mode == "position":
+    #     local_position_pub.publish(goal_pose)
 
     # if current_state.mode != "OFFBOARD" or not current_state.armed:
 

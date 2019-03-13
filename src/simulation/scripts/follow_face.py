@@ -20,20 +20,28 @@ from detect_window import detect_window
 import PIL
 
 
+
 class DroneStabilization:
 
     image_sub = None
 
     def __init__(self):
-
+        print(cv2. __version__)
         rospy.Subscriber("/state_machine/state",
                          String, self.state_callback)
         self.pub_condition = rospy.Publisher(
             "/state_machine/follow/find_condition", String, queue_size=10)
-        rospy.init_node('follow', anonymous=True)
+        rospy.init_node('follow_faces', anonymous=True)
         # self.yolo = YOLO()
 
         self.count_stable = 0
+
+        self.face_cascade = cv2.CascadeClassifier('./haarcascade_frontalface_default.xml')
+        if self.face_cascade.empty(): print("your face_cascade is empty. are you sure, the path is correct ?")
+
+
+        self.center = np.array([100,100,0,0])
+        self.alpha = 0.1
         # self.setup_window()
 
     def setup_window(self):
@@ -88,51 +96,21 @@ class DroneStabilization:
         # self.detect.update(cv_image)
         cv2.imshow("frame", cv_image)
         cv_image = cv2.resize(cv_image, (0, 0), fx=0.5, fy=0.5)
-        if self.frame == 0:
 
-            # pil_image = PIL.Image.fromarray(cv_image)
-            # r_image, out_boxes, out_score = self.yolo.detect_image(pil_image)
-            # window detected with min precision of (defined on yolo file)
-            # if out_score.shape[0] > 0:
-            if True:
-                rospy.loginfo("detect")
-                # m_box = out_boxes.mean(0)
-
-                # self.mean_box_cord = m_box[:]
-                # self.image_h = r_image.shape[0]
-                # self.image_w = r_image.shape[1]
-                # self.image_center = np.array(
-                #     [self.image_w / 2, self.image_h / 2])
-
-                # box_margin = 30
-                # # max_score_index = np.argmax(out_score)
-                box_lt = (0, 0)
-                box_rb = (cv_image.shape[0], cv_image.shape[1])
-                # box_lt = (max(int(out_boxes[max_score_index][1]) - box_margin, 0),
-                #           max(int(out_boxes[max_score_index][0]) - box_margin, 0))
-                # box_rb = (min(int(out_boxes[max_score_index][3]) + box_margin, self.image_w),
-                #           min(int(out_boxes[max_score_index][2]) + box_margin, self.image_h))
-
-                # img = cv2.rectangle(r_image, box_lt, box_rb, (0, 220, 200), 2)
-
-                self.opt_flow.resetFeatures(
-                    cv_image, interval=[box_lt[1], box_rb[1], box_lt[0], box_rb[0]], get_corners_only=False)
-                # print(init_feature + np.array(box_lt))
-                # self.opt_flow.set_p0(init_feature + np.array(box_lt))
-                # self.opt_flow.set_initial_img(cv_image)
-
-                self.frame += 1
-
-                # cv2.imshow("window", img)
-            else:
-                rospy.loginfo("no windows on view, trying again")
-                # self.vel_pub.publish(self.vec_vel)
-                # cv2.imshow("window", r_image)
-        else:
-            self.opt_flow.update(cv_image)
-            # print(self.opt_flow.get_square_shape())
-            # self.adjust_position(
-            #     self.opt_flow.get_square_center(), self.opt_flow.get_square_shape())
+        gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+        faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
+        if len(faces)>0:
+            self.center= self.center*(1-self.alpha)+np.mean(faces,axis=0)*self.alpha
+            print(self.center)
+            for (x,y,w,h) in faces:
+                cv2.rectangle(cv_image,(x,y),(x+w,y+h),(255,0,0),2)
+            cv2.circle(cv_image,(int(self.center[0]),int(self.center[1])),10,(0,0,200),-1)
+            # roi_gray = gray[y:y+h, x:x+w]
+            # roi_color = cv_image[y:y+h, x:x+w]
+            # eyes = eye_cascade.detectMultiScale(roi_gray)
+            # for (ex,ey,ew,eh) in eyes:
+            #     cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
+        cv2.imshow('Video', cv_image)
 
         k = cv2.waitKey(30) & 0xff
         if k == 27:
@@ -178,19 +156,6 @@ class DroneStabilization:
         if self.count_stable > 3:
             rospy.loginfo("GOOD!!")
             self.pub_condition.publish("ok")
-
-    # def detectCorners(self, img):
-
-    #     features_drift, global_drift = self.stab.getDrift()
-    #     features_pos, global_pos = self.stab.getPosition()
-
-    #     cv2.imshow("Original topic window", img)
-    #     try:
-    #         self.total_feature_drift += features_drift
-    #     except:
-    #         self.total_feature_drift = features_drift
-
-    #     print(global_drift.mean())
 
 
 def main():

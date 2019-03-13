@@ -4,9 +4,10 @@
     <!--<arg name="mode" default="window"/>-->
 
     <node name="Takeoff" pkg="simulation" type="takeoff.py" output="screen" launch-prefix="xterm -e" />
+    <node name="Faces" pkg="simulation" type="follow_face.py" output="screen" launch-prefix="xterm -e" />
     <node name="StateMachine" pkg="simulation" type="sm.py" output="screen" launch-prefix="xterm -e"/>
-    <node name="window" pkg="simulation" type="janela.py" output="screen" launch-prefix="xterm -e"/>
-    <node name="Rope" pkg="simulation" type="rope.py" output="screen" launch-prefix="xterm -e"/>
-    <node name="Through_Window" pkg="simulation" type="through_window.py" output="screen" launch-prefix="xterm -e"/>
+    <!-- <node name="window" pkg="simulation" type="janela.py" output="screen" launch-prefix="xterm -e"/> -->
+    <!-- <node name="Rope" pkg="simulation" type="rope.py" output="screen" launch-prefix="xterm -e"/> -->
+    <!-- <node name="Through_Window" pkg="simulation" type="through_window.py" output="screen" launch-prefix="xterm -e"/> -->
 
 </launch>

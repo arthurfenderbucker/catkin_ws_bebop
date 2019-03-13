@@ -1,66 +1,31 @@
-import rospy
+import numpy as np
+import cv2
 
-from geometry_msgs.msg import Twist
-from std_msgs.msg import Empty
-import sys
-import select
-import termios
-import tty
+face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+if face_cascade.empty(): raise Exception("your face_cascade is empty. are you sure, the path is correct ?")
 
+# eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+# if eye_cascade.empty(): raise Exception("your eye_cascade is empty. are you sure, the path is correct ?")
 
-def getKey():
-    tty.setraw(sys.stdin.fileno())
-    select.select([sys.stdin], [], [], 0)
-    key = sys.stdin.read(1)
-    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
-    return key
-
-
-if __name__ == "__main__":
-
-    pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
-    rospy.init_node('teleop_twist_keyboard')
-    pub2 = rospy.Publisher('bebop/takeoff', Empty, queue_size=1)
-    pub3 = rospy.Publisher('bebop/land', Empty, queue_size=1)
-    empty_msg = Empty()
-
-    pub2.publish(empty_msg)
-
-    while(1):
-        key = getKey()
-        print(key)
-        if key in moveBindings.keys():
-            x = moveBindings[key][0]
-            y = moveBindings[key][1]
-            z = moveBindings[key][2]
-            th = moveBindings[key][3]
-        elif key in speedBindings.keys():
-            speed = speed * speedBindings[key][0]
-            turn = turn * speedBindings[key][1]
-
-            print vels(speed, turn)
-            if (status == 14):
-                print msg
-            status = (status + 1) % 15
-
-        elif key == '1':
-            pub2.publish(empty_msg)
-        elif key == '2':
-            pub3.publish(empty_msg)
-
-        else:
-            x = 0
-            y = 0
-            z = 0
-            th = 0
-            if (key == '\x03'):
-                break
-
-        twist = Twist()
-    twist.linear.x = x * speed
-    twist.linear.y = y * speed
-    twist.linear.z = z * speed
-    twist.angular.x = 0
-    twist.angular.y = 0
-    twist.angular.z = th * turn
-    pub.publish(twist)
+video = cv2.VideoCapture(0)
+ret, frame = video.read()
+center = np.array([100,100,frame.shape[0]/2,frame.shape[0]/2])
+alpha = 0.1
+while(video.isOpened()):
+    ret, frame = video.read()
+    if ret:
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        center= center*(1-alpha)+np.mean(faces,axis=0)*alpha
+        print(center)
+        for (x,y,w,h) in faces:
+            cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
+        cv2.circle(frame,(int(center[0]),int(center[1])),10,(0,0,200),-1)
+        # roi_gray = gray[y:y+h, x:x+w]
+        # roi_color = frame[y:y+h, x:x+w]
+        # eyes = eye_cascade.detectMultiScale(roi_gray)
+        # for (ex,ey,ew,eh) in eyes:
+        #     cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
+        cv2.imshow('Video', frame)
+    if cv2.waitKey(1) & 0xFF == 27:
+        break

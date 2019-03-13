@@ -1,6 +1,6 @@
-# <img align="left" src="https://avatars1.githubusercontent.com/u/36579711?s=200&v=4" width="40" ><center>catkin_ws_bebop </center> 
+# <img align="left" src="https://avatars1.githubusercontent.com/u/36579711?s=200&v=4" width="40" ><div style="text-align:center">catkin_ws_bebop</div>
 
-### <center><bold color="#f03c15">Repo under development</bold> :exclamation:</center>
+### <div style="text-align:center;color:red"><bold >Repo under development</bold> :exclamation:</div>
 
 <br>
 
@@ -34,12 +34,11 @@ catkin build
 
 open a terminal and run:
 ```
-sudo systemctl start firmwared.service
-sudo firmwared
+. ~/catkin_ws_bebop/setup_simulation.sh
 ```
 in another terminal run
 ```
-fdc ping 
+. ~/launch_simulation_world.sh
 ```
 if firmwared is running correctly you should get "PONG", otherwise check [install sphinx](https://github.com/Insper/bebop_sphinx) step.
 
@@ -47,8 +46,8 @@ if firmwared is running correctly you should get "PONG", otherwise check [instal
 
 ----
 
-#### Run on real live (offboard) <img align="right" src=".assets/parrot-bebop-2" width="100" >
-tested on parrot bebop 2 drone
+#### Run on real live (offboard)
+tested on parrot bebop 2 drone  <img align="center" style="margin:-50px 0px -50px 0px;" src=".assets/parrot-bebop-2" width="100" >
 
 ... under development ...
 

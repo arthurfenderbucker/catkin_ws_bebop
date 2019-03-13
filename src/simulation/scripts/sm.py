@@ -74,18 +74,37 @@ class square(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Square')
 
-        self.control(1, 0, 0)
-        rospy.sleep(1)
-        self.control(0, 1, 0)
-        rospy.sleep(1)
-        self.control(-1, 0, 0)
-        rospy.sleep(1)
-        self.control(0, -1, 0)
-        rospy.sleep(1)
-        self.control(0, 0, 0)
+        # self.control(1, 0, 0)
+        # rospy.sleep(1)
+        # self.control(0, 1, 0)
+        # rospy.sleep(1)
+        # self.control(-1, 0, 0)
+        # rospy.sleep(1)
+        # self.control(0, -1, 0)
+        # rospy.sleep(1)
+        # self.control(0, 0, 0)
         # self.condition = ""
         return 'done'
 
+class follow(smach.State):
+    def __init__(self):
+        smach.State.__init__(
+            self, outcomes=['done', 'erro'])
+        rospy.Subscriber("/state_machine/follow/find_condition",
+                         String, self.callback)
+        self.condition = ""
+
+    def callback(self, data):
+        print(data)
+        self.condition = data.data
+
+    def execute(self, userdata):
+        rospy.loginfo('Executing state find window')
+        pub_state.publish("follow")
+        while self.condition != "ok" and not rospy.is_shutdown():
+            pass
+        self.condition = ""
+        return 'done'
 
 class land(smach.State):
     def __init__(self):
@@ -103,7 +122,6 @@ class land(smach.State):
         return 'done'
 
 # define state find_window
-
 
 class find_window(smach.State):
     def __init__(self):
@@ -198,13 +216,13 @@ def main():
     with sm:
         # Add states to the container
         smach.StateMachine.add('takeoff', takeoff(),
-                               transitions={'flying': 'WINDOW',
+                               transitions={'flying': 'follow',
                                             'erro': 'land'})
 
         smach.StateMachine.add('square', square(),
                                transitions={'done': 'land_now', 'erro': 'land'})
 
-        smach.StateMachine.add('opt_flow', square(),
+        smach.StateMachine.add('follow', follow(),
                                transitions={'done': 'land_now', 'erro': 'land'})
 
         smach.StateMachine.add('land_now', land(),

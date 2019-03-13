@@ -1,0 +1,2 @@
+[submodule "src/bebop_autonomy"]
+	url = https://github.com/AutonomyLab/bebop_autonomy.git
