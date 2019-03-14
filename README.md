@@ -47,12 +47,12 @@ open a terminal and run:
 ```
 . ~/catkin_ws_bebop/setup_simulation.sh
 ```
-in another terminal run
+in another terminal run:
 ```
 . ~/catkin_ws_bebop/launch_simulation_world.sh
 ```
 
-if firmwared is running correctly you should get "PONG", otherwise check instructions[install sphinx](https://github.com/Insper/bebop_sphinx) step.
+If firmwared is running correctly you should get "PONG", otherwise check instructions[install sphinx](https://github.com/Insper/bebop_sphinx) step.
 
 check if the drone have spawned correctly by running:
 ```
