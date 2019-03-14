@@ -1,6 +1,6 @@
-# <img align="left" src="https://avatars1.githubusercontent.com/u/36579711?s=200&v=4" width="40" ><div style="text-align:center">catkin_ws_bebop</div>
+# <img align="left" src="https://avatars1.githubusercontent.com/u/36579711?s=200&v=4" width="40" ><p align="center">catkin_ws_bebop</p>
 
-### <div style="text-align:center;color:red"><bold >Repo under development</bold> :exclamation:</div>
+### <p align="center"><div style="text-align:center;color:red"><bold >Repo under development</bold> :exclamation:</div></p>
 
 <br>
 
@@ -12,7 +12,7 @@ ros workspace to simulate imav2019 indor
 
 ----
 #### Prerequisites
-* [install ros](http://wiki.ros.org/kinetic/Installation/Ubuntu) (check documentation)
+* [ROS](http://wiki.ros.org/kinetic/Installation/Ubuntu)
 
 
 ----
@@ -65,12 +65,25 @@ you shoud get some thing like:
 ...
 
 Great! now you are ready to simulate!
-... under development ...
+
+```
+roslaunch simulation simulate.launch
+```
+*if you are using a different ip, edit the value of the arg "ip" on the simulate.launch file*
+
 
 ----
 
 #### Run on real live (offboard)
 tested on parrot bebop 2 drone  <img align="center" style="margin:-50px 0px -50px 0px;" src=".assets/parrot-bebop-2" width="100" >
+
+Firstly make sure that none of the simulation scripts is runing.<br>
+Turn on the drone and connect to the drone's wifi<br>
+start bebops'driver by running:
+```
+roslaunch simulation drone.launch
+```
+<br>
 
 ... under development ...
 

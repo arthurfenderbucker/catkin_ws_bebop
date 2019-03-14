@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+<include>
+ ip:=10.202.0.1
+ file="$(find simulation)/launch/nodes.xml"
+</launch>
