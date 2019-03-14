@@ -15,9 +15,11 @@ ros workspace to simulate imav2019 indor
 * [install ros](http://wiki.ros.org/kinetic/Installation/Ubuntu) (check documentation)
 
 
+----
+#### Setup Repository 
+(tested on ubuntu 16.04)
 
-#### Install Repo
------
+
 clone repo
 ```
 cd ~/
@@ -35,6 +37,7 @@ git clone https://github.com/AutonomyLab/bebop_autonomy.git src/bebop_autonomy
 rosdep update
 rosdep install --from-paths src -i
 catkin build
+echo "source /home/arthur/catkin_ws_bebop/devel/setup.bash" >> ~/.bashrc
 ```
 ----
 #### Run simulation
@@ -46,10 +49,22 @@ open a terminal and run:
 ```
 in another terminal run
 ```
-. ~/launch_simulation_world.sh
+. ~/catkin_ws_bebop/launch_simulation_world.sh
 ```
-if firmwared is running correctly you should get "PONG", otherwise check [install sphinx](https://github.com/Insper/bebop_sphinx) step.
 
+if firmwared is running correctly you should get "PONG", otherwise check instructions[install sphinx](https://github.com/Insper/bebop_sphinx) step.
+
+check if the drone have spawned correctly by running:
+```
+ping 10.202.0.1   #it might be other ip like 10.202.X.1
+```
+you shoud get some thing like:
+>64 bytes from 10.202.0.1: icmp_seq=1 ttl=64 time=0.030 ms<br>
+64 bytes from 10.202.0.1: icmp_seq=2 ttl=64 time=0.034 ms<br>
+64 bytes from 10.202.0.1: icmp_seq=3 ttl=64 time=0.046 ms<br>
+...
+
+Great! now you are ready to simulate!
 ... under development ...
 
 ----
