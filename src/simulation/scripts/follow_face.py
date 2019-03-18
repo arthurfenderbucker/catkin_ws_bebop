@@ -15,6 +15,7 @@ import time
 from dronecontrol.msg import Vector3D
 from optical_flow import CameraStabilization as camStab
 from detect_window import detect_window
+import os
 
 # from yolo3.yolo import YOLO, detect_video
 import PIL
@@ -35,13 +36,14 @@ class DroneStabilization:
         # self.yolo = YOLO()
 
         self.count_stable = 0
-
+        print(os.listdir("."))
         self.face_cascade = cv2.CascadeClassifier('./haarcascade_frontalface_default.xml')
         if self.face_cascade.empty(): print("your face_cascade is empty. are you sure, the path is correct ?")
 
 
         self.center = np.array([100,100,0,0])
         self.alpha = 0.1
+        # self.cap = cv2.VideoCapture(0)
         # self.setup_window()
 
     def setup_window(self):
@@ -81,7 +83,7 @@ class DroneStabilization:
             self.image_sub = None
 
     def callback(self, data):
-        print("ksadfnk")
+        
         # if self.count_callbacks < 10:
         #     self.count_callbacks += 1
         #     return
@@ -89,28 +91,31 @@ class DroneStabilization:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-
+        # ret, cv_image = self.cap.read()
         (rows, cols, channels) = cv_image.shape
         if not (cols > 60 and rows > 60):  # returns if data have unvalid shape
             return
         # self.detect.update(cv_image)
         cv2.imshow("frame", cv_image)
-        cv_image = cv2.resize(cv_image, (0, 0), fx=0.5, fy=0.5)
+        # cv_image = cv2.resize(cv_image, (0, 0), fx=0.5, fy=0.5)
 
         gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
         faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
         if len(faces)>0:
             self.center= self.center*(1-self.alpha)+np.mean(faces,axis=0)*self.alpha
-            print(self.center)
+            # print(self.center)
             for (x,y,w,h) in faces:
                 cv2.rectangle(cv_image,(x,y),(x+w,y+h),(255,0,0),2)
-            cv2.circle(cv_image,(int(self.center[0]),int(self.center[1])),10,(0,0,200),-1)
+            cv2.circle(cv_image,(int(self.center[0]+self.center[2]/2),int(self.center[1]+self.center[3]/2)),10,(0,0,200),-1)
             # roi_gray = gray[y:y+h, x:x+w]
             # roi_color = cv_image[y:y+h, x:x+w]
             # eyes = eye_cascade.detectMultiScale(roi_gray)
             # for (ex,ey,ew,eh) in eyes:
             #     cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
+            # print(self.center)
+            print(self.center[0] - cols)
         cv2.imshow('Video', cv_image)
+
 
         k = cv2.waitKey(30) & 0xff
         if k == 27:
@@ -121,7 +126,6 @@ class DroneStabilization:
         elif k == ord('p') or k == 'p':
             print("through_window ")
             self.pub_condition.publish("ok")
-
         try:
             # self.vel_pub.publish(self.vec_vel)
             # print(self.vec_vel.x)

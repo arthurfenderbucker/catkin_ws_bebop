@@ -44,7 +44,7 @@ class takeoff(smach.State):
         for i in range(3000):
             self.takeoff_topic.publish(Empty())
             rospy.sleep(0.001)
-            # self.test_pub.publish()
+            self.test_pub.publish()
 
         rospy.sleep(4)
         # self.condition = ""
@@ -74,16 +74,16 @@ class square(smach.State):
     def execute(self, userdata):
         rospy.loginfo('Square')
 
-        # self.control(1, 0, 0)
-        # rospy.sleep(1)
-        # self.control(0, 1, 0)
-        # rospy.sleep(1)
-        # self.control(-1, 0, 0)
-        # rospy.sleep(1)
-        # self.control(0, -1, 0)
-        # rospy.sleep(1)
-        # self.control(0, 0, 0)
-        # self.condition = ""
+        self.control(1, 0, 0)
+        rospy.sleep(1)
+        self.control(0, 1, 0)
+        rospy.sleep(1)
+        self.control(-1, 0, 0)
+        rospy.sleep(1)
+        self.control(0, -1, 0)
+        rospy.sleep(1)
+        self.control(0, 0, 0)
+        self.condition = ""
         return 'done'
 
 class follow(smach.State):

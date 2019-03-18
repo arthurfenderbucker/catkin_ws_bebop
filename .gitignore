@@ -5,3 +5,5 @@ build/
 devel/
 
 logs/
+
+\.vscode/
