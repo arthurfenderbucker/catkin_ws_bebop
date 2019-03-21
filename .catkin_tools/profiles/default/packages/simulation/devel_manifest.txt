@@ -1,4 +1,0 @@
-simulation
-/home/arthur/catkin_ws_bebop/devel/.private/simulation/share/simulation/cmake/simulationConfig-version.cmake /home/arthur/catkin_ws_bebop/devel/share/simulation/cmake/simulationConfig-version.cmake
-/home/arthur/catkin_ws_bebop/devel/.private/simulation/share/simulation/cmake/simulationConfig.cmake /home/arthur/catkin_ws_bebop/devel/share/simulation/cmake/simulationConfig.cmake
-/home/arthur/catkin_ws_bebop/devel/.private/simulation/lib/pkgconfig/simulation.pc /home/arthur/catkin_ws_bebop/devel/lib/pkgconfig/simulation.pc
