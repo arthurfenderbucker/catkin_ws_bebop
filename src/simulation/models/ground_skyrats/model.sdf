@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="ground_skyrats">
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>7 7 .1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <box>
+            <size>7 7 .1</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://ground_skyrats/materials/scriptsl</uri>
+            <uri>model://ground_skyrats/materials/textures</uri>
+            <name>Skyrats/USP</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

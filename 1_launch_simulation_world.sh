@@ -1,2 +1,2 @@
 unset PYTHONPATH
-sphinx  /opt/parrot-sphinx/usr/share/sphinx/worlds/outdoor_1.world /opt/parrot-sphinx/usr/share/sphinx/drones/bebop2nolan.drone
+sphinx  ~/catkin_ws_bebop/src/simulation/worlds/imav_2019.world ~/catkin_ws_bebop/drones/bebop2nolan.drone

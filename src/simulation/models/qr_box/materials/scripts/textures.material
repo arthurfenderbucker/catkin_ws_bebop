@@ -1,0 +1,53 @@
+material QR_code/qr1
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture qr_1.png
+      }
+    }
+  }
+}
+material QR_code/qr2
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture qr_2.png
+      }
+    }
+  }
+}
+material QR_code/qr3
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture qr_3.png
+      }
+    }
+  }
+}
+material QR_code/qr4
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture qr_4.png
+      }
+    }
+  }
+}
+

@@ -13,8 +13,18 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 )
 
+#----------CUSTOM OPENCV---------
+find_package(OpenCV REQUIRED
+NO_MODULE # should be optional, tells CMake to use config mode
+PATHS /usr/local # look here
+NO_DEFAULT_PATH) # and don't look anywhere else
+#--------------------------------
+
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+
+
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures

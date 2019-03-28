@@ -216,11 +216,11 @@ def main():
     with sm:
         # Add states to the container
         smach.StateMachine.add('takeoff', takeoff(),
-                               transitions={'flying': 'follow',
+                               transitions={'flying': 'square',
                                             'erro': 'land'})
 
-        smach.StateMachine.add('square', square(),
-                               transitions={'done': 'land_now', 'erro': 'land'})
+        # smach.StateMachine.add('square', square(),
+        #                        transitions={'done': 'land_now', 'erro': 'land'})
 
         smach.StateMachine.add('follow', follow(),
                                transitions={'done': 'land_now', 'erro': 'land'})
