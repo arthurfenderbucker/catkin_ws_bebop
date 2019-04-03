@@ -20,7 +20,7 @@ import os
 # from yolo3.yolo import YOLO, detect_video
 import PIL
 
-
+print(cv2.ocl.haveOpenCL())
 
 class DroneStabilization:
 
@@ -42,7 +42,7 @@ class DroneStabilization:
 
 
         self.center = np.array([100,100,0,0])
-        self.alpha = 0.1
+        self.alpha = 0.80
         # self.cap = cv2.VideoCapture(0)
         # self.setup_window()
 
@@ -63,6 +63,7 @@ class DroneStabilization:
         self.pixel_movement = [0, 0]
 
         self.frame = 0
+        self.count = 0
         self.count_callbacks = 0
         self.opt_flow = camStab()
         self.image_sub = rospy.Subscriber(
@@ -87,20 +88,24 @@ class DroneStabilization:
         # if self.count_callbacks < 10:
         #     self.count_callbacks += 1
         #     return
+        if self.count == 4:
+            self.count = 0
+        else:
+            self.count+=1
+            return
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
         # ret, cv_image = self.cap.read()
+
+        cv_image = cv2.resize(cv_image, (0, 0), fx=0.5, fy=0.5)
         (rows, cols, channels) = cv_image.shape
         if not (cols > 60 and rows > 60):  # returns if data have unvalid shape
             return
-        # self.detect.update(cv_image)
-        cv2.imshow("frame", cv_image)
-        # cv_image = cv2.resize(cv_image, (0, 0), fx=0.5, fy=0.5)
 
         gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-        faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
+        faces = self.face_cascade.detectMultiScale(gray, 1.3, 2)
         if len(faces)>0:
             self.center= self.center*(1-self.alpha)+np.mean(faces,axis=0)*self.alpha
             # print(self.center)
@@ -113,7 +118,8 @@ class DroneStabilization:
             # for (ex,ey,ew,eh) in eyes:
             #     cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
             # print(self.center)
-            print(self.center[0] - cols)
+            print(self.center[0] - cols/3, self.center[1] - rows/3)
+
         cv2.imshow('Video', cv_image)
 
 

@@ -1,6 +1,7 @@
+#!/usr/bin/env python
 import numpy as np
 import cv2
-
+print(cv2.ocl.haveOpenCL())
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 if face_cascade.empty(): raise Exception("your face_cascade is empty. are you sure, the path is correct ?")
 
@@ -16,16 +17,17 @@ while(video.isOpened()):
     if ret:
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-        center= center*(1-alpha)+np.mean(faces,axis=0)*alpha
-        print(center)
-        for (x,y,w,h) in faces:
-            cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
-        cv2.circle(frame,(int(center[0]),int(center[1])),10,(0,0,200),-1)
-        # roi_gray = gray[y:y+h, x:x+w]
-        # roi_color = frame[y:y+h, x:x+w]
-        # eyes = eye_cascade.detectMultiScale(roi_gray)
-        # for (ex,ey,ew,eh) in eyes:
-        #     cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
+        if len(faces)>0:
+            center= center*(1-alpha)+np.mean(faces,axis=0)*alpha
+            print(center)
+            for (x,y,w,h) in faces:
+                cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
+            cv2.circle(frame,(int(center[0]),int(center[1])),10,(0,0,200),-1)
+            # roi_gray = gray[y:y+h, x:x+w]
+            # roi_color = frame[y:y+h, x:x+w]
+            # eyes = eye_cascade.detectMultiScale(roi_gray)
+            # for (ex,ey,ew,eh) in eyes:
+            #     cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
         cv2.imshow('Video', frame)
     if cv2.waitKey(1) & 0xFF == 27:
         break

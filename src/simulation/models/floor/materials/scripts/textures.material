@@ -1,0 +1,14 @@
+material TexturedFloor/Image
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture floor_img_2.jpg
+      }
+    }
+  }
+}
+
