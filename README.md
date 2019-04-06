@@ -81,7 +81,7 @@ you shoud get some thing like:
 
 Great! now you are ready to simulate!
 
->Note: you can also use roslaunch instead of the 2_launch_simulation_driver.sh script
+>Note: you can also use roslaunch instead of the 2_launch_simulation_driver.sh script4
 >```
 >roslaunch simulation simulate.launch
 >```
