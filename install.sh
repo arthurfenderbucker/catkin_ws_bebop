@@ -14,4 +14,5 @@ cp bebop2_pfe.drone /opt/parrot-sphinx/usr/share/sphinx/drones/
 cp bebop2nolan.drone /opt/parrot-sphinx/usr/share/sphinx/drones/
 
 
-
+echo "source ~/catkin_ws_bebop/setup.sh" >> ~/.bashrc
+source ~/.bashrc
