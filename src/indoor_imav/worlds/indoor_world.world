@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<sdf version="1.5">
+  <world name="indoor_world">
+    <include><!-- Add in a light source -->
+      <uri>model://sun</uri>
+    </include>
+    <include><!-- Add in a ground -->
+      <uri>model://asphalt_plane</uri>
+    </include>
+    <include><!-- PRATELEIRAS -->
+      <static>true</static>
+      <uri>/home/caio/catkin_ws/src/indoor_imav/models/prateleira</uri>
+      <name>prateleira1</name>
+      <pose>4 2.5 0 0 0 1.570796325</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <uri>/home/caio/catkin_ws/src/indoor_imav/models/prateleira</uri>
+      <name>prateleira2</name>
+      <pose>2 2.5 0 0 0 1.570796325</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <uri>/home/caio/catkin_ws/src/indoor_imav/models/prateleira</uri>
+      <name>prateleira3</name>
+      <pose>4 4.5 0 0 0 1.570796325</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <uri>/home/caio/catkin_ws/src/indoor_imav/models/prateleira</uri>
+      <name>prateleira4</name>
+      <pose>2 4.5 0 0 0 1.570796325</pose>
+    </include>
+    <include><!-- MESA -->
+      <static>true</static>
+      <uri>/home/caio/catkin_ws/src/indoor_imav/models/mesa</uri>
+      <name>mesa</name>
+      <pose>-1 3.5 0 0 0 1.570796325</pose>
+    </include>
+    <include><!-- RAMPAS -->
+      <static>true</static>
+      <uri>/home/caio/catkin_ws/src/indoor_imav/models/rampa</uri>
+      <name>rampa1</name>
+      <pose>-4 2 0.05 0 0 -1.570796325</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <uri>/home/caio/catkin_ws/src/indoor_imav/models/rampa</uri>
+      <name>rampa3</name>
+      <pose>-4 4 0.05 0 0 -1.570796325</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <uri>/home/caio/catkin_ws/src/indoor_imav/models/rampa</uri>
+      <name>rampa3</name>
+      <pose>-4 6 0.05 0 0 -1.570796325</pose>
+    </include>
+    <include><!-- DRONEPONTOS -->
+      <static>true</static>
+      <uri>/home/caio/catkin_ws/src/indoor_imav/models/droneponto</uri>
+      <name>droneponto1</name>
+      <pose>-4 1 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <uri>/home/caio/catkin_ws/src/indoor_imav/models/droneponto</uri>
+      <name>droneponto2</name>
+      <pose>-4 3 0 0 0 0</pose>
+    </include>
+    <include>
+      <static>true</static>
+      <uri>/home/caio/catkin_ws/src/indoor_imav/models/droneponto</uri>
+      <name>droneponto3</name>
+      <pose>-4 5 0 0 0 0</pose>
+    </include>
+  </world>
+</sdf>
+
