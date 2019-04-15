@@ -22,7 +22,7 @@ class DetectAlphanumeric:
                 self.cv_image = self.bridge.imgmsg_to_cv2(image, "mono8")
                 self.gray = self.cv_image
                 cv2.imshow("Camera", self.gray)
-                #self.detect()
+                self.detect()
             except CvBridgeError as e:
                 print( "EH essa porraaaaaaaaaa")
                 print (e)
@@ -32,9 +32,6 @@ class DetectAlphanumeric:
     def detect(self):
         # blur = cv2.GaussianBlur(self.gray,(3,3),0)
         # ret3, thr = cv2.threshold(blur,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-        print('2')
-        #cv2.imshow("Camera", self.gray)
-        print('3')
         #cv2.imshow("Threshold",thr)
         temp = pytesseract.image_to_string(self.gray)
         print('4')
@@ -43,15 +40,15 @@ class DetectAlphanumeric:
         j=0
         while i < 3 and j < 30:
             j += 1
-            data = pytesseract.image_to_string(self.gray)
-            if data == temp:
+            self.data = pytesseract.image_to_string(self.gray)
+            if self.data == temp:
                 i += 1
             else:
-                temp = data
+                temp = self.data
                 i=0
-        self.text = data
+        self.text = self.data
 
-        print(self.text)
+        rospy.loginfo(self.text)
         return self.text
 
 
@@ -61,7 +58,6 @@ def main():
     rospy.init_node('DetectAlphanumeric', anonymous=True)
     print('initnodeafter')
     rate = rospy.Rate(20)
-    print('4')
     while not (cv2.waitKey(1) & 0xFF == ord('q')):
         #print('entrou no while')
         try:

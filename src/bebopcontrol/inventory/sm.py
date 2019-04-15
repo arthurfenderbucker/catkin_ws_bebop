@@ -16,31 +16,38 @@ print("foi\n")
 from set_position import set_x_relative_position
 
 velocity_position_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size=10)
-def spinalittle():
+def spinalittle(theta):
+    theta = (theta*3.14159265)/180
+    tau = 1.93
+    t = theta/tau
     velocity_message.angular.x = 0
     velocity_message.angular.y = 0
-    velocity_message.angular.z = 0.4
+    velocity_message.angular.z = 1
     velocity_message.linear.x = 0
     velocity_message.linear.y = 0
     velocity_message.linear.z = 0
     last_time = rospy.get_rostime().to_sec()
-    while rospy.get_rostime().to_sec() - last_time < 4:
+    while rospy.get_rostime().to_sec() - last_time < t:
         velocity_position_pub.publish(velocity_message)
         rate.sleep()
 
-def walkalittle():
+def walkalittle(x, y, z, t):
+    #t=1
     velocity_message.angular.x = 0
     velocity_message.angular.y = 0
     velocity_message.angular.z = 0
-    velocity_message.linear.x = 1
-    velocity_message.linear.y = 0
-    velocity_message.linear.z = 0
+    velocity_message.linear.x = x
+    velocity_message.linear.y = y
+    velocity_message.linear.z = z
     rospy.loginfo('Velocity: (' + str(velocity_message.linear.x) + ', ' + str(velocity_message.linear.y) + ', ' + str(velocity_message.linear.z) + ')')
     last_time = rospy.get_rostime().to_sec()
-    while rospy.get_rostime().to_sec() - last_time < 9:
+    while rospy.get_rostime().to_sec() - last_time < t:
         velocity_position_pub.publish(velocity_message)
         rate.sleep()
-
+    velocity_message.linear.x = 0
+    velocity_message.linear.y = 0
+    velocity_message.linear.z = 0
+    velocity_position_pub.publish(velocity_message)
 class Takeoff(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['done','aborted'])
@@ -51,33 +58,67 @@ class Takeoff(smach.State):
         for i in range(20):
             self.pub.publish(Empty())
             rate.sleep()
-        rospy.sleep(8)
-        rospy.loginfo('Spinning')
-        #spinalittle()
-        rospy.sleep(5)
-        walkalittle()
+        rospy.sleep(10)
         return 'done'
 
 class Inventory(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['succeeded','aborted'])
         self.file = open("inventory.txt", "a")
+        self.alph_dec = DetectAlphanumeric()
+        self.qr_dec = QrCode()
 
     def execute(self, userdata):
         rospy.loginfo('Executing state Inventory')
-        alph_dec = DetectAlphanumeric()
-        qr_dec = QrCode()
-        last_time = rospy.get_rostime().to_sec()
-        rospy.loginfo('Reading QR Codes!')
-        while rospy.get_rostime().to_sec() - last_time < 15:
-            data = qr_dec.detect()
-            print(data)
+        rospy.loginfo('Spinning')
+        #spinalittle(90)
+        rospy.sleep(5)
+        walkalittle(0.2, 0, 0, 1)
         rospy.loginfo('Reading Alphanumeric Digits!')
-        text = alph_dec.detect()
-        while rospy.get_rostime().to_sec() - last_time < 15:
-            text = alph_dec.detect()
-            print(text)
-        self.file.write(str(text) + '\n')
+        text = self.alph_dec.detect()
+        print(text)
+        self.file.write(str(text) + '\n\n')
+
+        rospy.sleep(4)
+        walkalittle(0, 0.1, 0, 1.7)
+        rospy.loginfo('Reading Alphanumeric Digits!')
+        text = self.alph_dec.detect()
+        print(text)
+        self.file.write(str(text) + '\n\n')
+        rospy.sleep(4)
+        walkalittle(0, 0.1, 0, 1.7)
+        rospy.loginfo('Reading Alphanumeric Digits!')
+        text = self.alph_dec.detect()
+        print(text)
+        self.file.write(str(text) + '\n\n')
+        # rospy.loginfo('Reading QR Codes!')
+        # data = self.qr_dec.detect()
+        # print(data)
+        last_time = rospy.get_rostime().to_sec()
+        # rospy.loginfo('Reading QR Codes!')
+        # while rospy.get_rostime().to_sec() - last_time < 10:
+        #     data = self.qr_dec.detect()
+        #     print(data)
+        #     rate.sleep()
+        #     self.file.write(str(data) + '\n')
+        # text = self.alph_dec.detect()
+        # while rospy.get_rostime().to_sec() - last_time < 10:
+        #     text = self.alph_dec.detect()
+        #     print(text)
+        # self.file.write(str(text) + '\n\n')
+        #walkalittle(0, 0.2, 0)
+        rospy.sleep(5)
+        last_time = rospy.get_rostime().to_sec()
+        # rospy.loginfo('Reading QR Codes!')
+        # while rospy.get_rostime().to_sec() - last_time < 10:
+        #     data = self.qr_dec.detect()
+        #     print(data)
+        # self.file.write(str(data) + '\n')
+        rospy.loginfo('Reading Alphanumeric Digits!')
+        # while rospy.get_rostime().to_sec() - last_time < 10:
+        #     text = self.alph_dec.detect()
+        #     print(text)
+        # self.file.write(str(text) + '\n\n')
         return 'succeeded'
 
 class Land(smach.State):
