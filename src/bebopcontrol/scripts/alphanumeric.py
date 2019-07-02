@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import rospy
 import numpy as np
 import cv2
@@ -24,7 +25,6 @@ class DetectAlphanumeric:
                 cv2.imshow("Camera", self.gray)
                 self.detect()
             except CvBridgeError as e:
-                print( "EH essa porraaaaaaaaaa")
                 print (e)
             cv2.waitKey(3)
         self.frame += 1
@@ -54,10 +54,10 @@ class DetectAlphanumeric:
 
 def main():
     detecter = DetectAlphanumeric()
-    print('initnodeb')
     rospy.init_node('DetectAlphanumeric', anonymous=True)
-    print('initnodeafter')
     rate = rospy.Rate(20)
+    for i in range (10):
+        rate.sleep()
     while not (cv2.waitKey(1) & 0xFF == ord('q')):
         #print('entrou no while')
         try:

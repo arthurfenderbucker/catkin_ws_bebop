@@ -1,10 +1,8 @@
 import rospy
 import time ## controlling the time
 from geometry_msgs.msg import Twist ## controlling the velocity
-import os
-#from alphanumeric import DetectAlphanumeric
-#from QrCode import QrCode
 from std_msgs.msg import Empty
+import os
 
 velocity_message = Twist()
 
@@ -17,7 +15,6 @@ def set_x_relative_position(x):
 	'''
 	Input:
 	(x,y,z) = vector of position
-
 	Task:
 	publish velocity messages during the time linked to position
 	'''
@@ -69,11 +66,9 @@ def set_x_relative_position(x):
 				return
 
 def set_y_relative_position(y):
-
 	'''
 	Input:
 	(x,y,z) = vector of position
-
 	Task:
 	publish velocity messages during the time linked to position
 	'''
@@ -83,7 +78,6 @@ def set_y_relative_position(y):
 	global velocity_message
 
 	time_duration = abs(float(y/4))
-
 	print(time_duration)
 
 	timeout = time.time() + time_duration # 0.5 minutes from now
@@ -129,7 +123,6 @@ def set_z_relative_position(z):
 	'''
 	Input:
 	(x,y,z) = vector of position
-
 	Task:
 	publish velocity messages during the time linked to position
 	'''
@@ -173,8 +166,11 @@ def set_z_relative_position(z):
 			rate.sleep()
 
 			if time.time() > timeout:
+
 				#print("[ bebop2 WARN] Position reached! x: %f y: %f z: %f" % abs_position_x, abs_position_y, abs_position_z)
+
 				abs_position_z = abs_position_z + z
+
 				return
 
 ## --- NODE --- ##
@@ -190,29 +186,36 @@ velocity_position_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size=10)
 takeoff_pub = rospy.Publisher('bebop/takeoff', Empty, queue_size=1)
 land_pub = rospy.Publisher('bebop/land', Empty, queue_size=1)
 
-takeoff_pub.publish(Empty())
 
+# DECOLAR
+for i in range(10):
+    takeoff_pub.publish(Empty())
+    rate.sleep()
+print("[ bebop2 WARN] Takeoff succesfully")
+time.sleep(4)
+rospy.logwarn("SUBINDO UM POUQUINHO")
+set_z_relative_position(0.5)
+time.sleep(4)
+
+# # IR
+for i in range(2):
+	rospy.logwarn("INDO PRO LADOOOO")
+	set_y_relative_position(0.5)
+	rate.sleep()
+	time.sleep(3)
 time.sleep(5)
-
-rospy.logwarn("Takeoff succesfully")
-
-#alph_dec = DetectAlphanumeric()
-#qr_dec = QrCode()
-
-while not rospy.is_shutdown():
-	key = int(input("[ Skyrats wants to know] One more iteration?"))
-
-	if key == 0:
-		land_pub.publish(Empty())
-		rospy.logwarn("Land succesfully")
-
-	if key == 1:
-		takeoff_pub.publish(Empty())
-		for i in range(0, 3):
-
-			set_y_relative_position(0.4)
-			time.sleep(2)
-			#rospy.loginfo('Alphanumeric Code: ' + str(alph_dec.text))
-			# data = qr_dec.detect()
-			# rospy.loginfo('QrCode: ' + str(data))
-			rate.sleep()
+# VOLTAR
+set_z_relative_position(-1)
+rate.sleep()
+time.sleep(2)
+rospy.logwarn("DESCENDO UM POUQUINHO")
+for i in range(2):
+	rospy.logwarn("INDO PRO OUTRO LADOOOO")
+	set_y_relative_position(-0.45)
+	rate.sleep()
+	time.sleep(3)
+# POUSAR
+for i in range(30):
+	land_pub.publish(Empty())
+	rate.sleep()
+print("[ bebop2 WARN] Land succesfully")

@@ -183,36 +183,36 @@ def set_z_relative_position(z):
 
 print("Welcome to the first node to control Parrot Bebop2 Drone.")
 print("Developed by Skyrats Intelligent Drones team of Poli-USP.")
-print("0")
-#rospy.init_node('set_position', anonymous=1)
-print("1")
-rate = rospy.Rate(20) # publish at 20 [Hz]
-print("2")
-velocity_position_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size=10)
-print("3")
-takeoff_pub = rospy.Publisher('/bebop/takeoff', Empty, queue_size=1)
-print("4")
+
+
+
 #rospy.spin()
 #takeoff_pub.publish(empty)
-print("5")
+
 #time.sleep(3)
-print("6")
+
 #rospy.logwarn("Takeoff succesfully")
-print("7")
-# def main():
-#     while not rospy.is_shutdown():
-#     	key = int(input("[ Skyrats wants to know] One more iteration?"))
-#     	if key == 0:
-#     	    #os.system("./land.sh")
-#             rate.sleep()
-#             takeoff_pub.publish(empty)
-#             rospy.logwarn("Land succesfully")
-#
-#     	if key == 1:
-#     		for i in range(0, 3):
-#     			set_y_relative_position(0.5)
-#     			time.sleep(2)
-#     			rate.sleep()
+
+def main():
+	rospy.init_node('set_position', anonymous=1)
+
+	rate = rospy.Rate(20) # publish at 20 [Hz]
+
+	velocity_position_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size=10)
+
+	takeoff_pub = rospy.Publisher('/bebop/takeoff', Empty, queue_size=1)
+	while not rospy.is_shutdown():
+		key = int(input("[ Skyrats wants to know] One more iteration?"))
+		if key == 0:
+    	    #os.system("./land.sh")
+			rate.sleep()
+			takeoff_pub.publish(empty)
+			rospy.logwarn("Land succesfully")
+		elif key == 1:
+			for i in range(0, 3):
+				set_y_relative_position(0.5)
+				time.sleep(2)
+				rate.sleep()
 
 if __name__ == '__main__':
     main()

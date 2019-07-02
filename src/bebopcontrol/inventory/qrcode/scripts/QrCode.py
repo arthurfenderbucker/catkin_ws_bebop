@@ -34,40 +34,39 @@ class QrCode:
     def decode(self, im):
 
         decodedObjects = pyzbar.decode(im)
- 
+
         for obj in decodedObjects:
 
             f = open("Inventario.txt", "a")
             f.write(str(obj.data) + '\n')
-            
+
             print('Type : ', obj.type)
             print('Data : ', obj.data,'\n')
-         
+
         return decodedObjects
 
     def display(self, im, decodedObjects):
 
     	n = 0
 
-    	for decodedObject in decodedObjects: 
+    	for decodedObject in decodedObjects:
 
 	        points = decodedObject.polygon
-	     
+
 	        # If the points do not form a quad, find convex hull
-	        if len(points) > 4 : 
+	        if len(points) > 4 :
 	          hull = cv2.convexHull(np.array([point for point in points], dtype=np.float32))
 	          hull = list(map(tuple, np.squeeze(hull)))
-	        else : 
+	        else :
 	          hull = points;
-	         
+
 	        # Number of points in the convex hull
 	        n = len(hull)
-	     
+
         # Draw the convext hull
         for j in range(0,n):
 
         	cv2.line(im, hull[j], hull[ (j+1) % n], (255,0,0), 3)
-     
      	 # Display results s
 		cv2.imshow("Results", im)
 

@@ -22,7 +22,7 @@ class QrCode:
                 self.cv_image = self.bridge.imgmsg_to_cv2(image, "mono8")
                 self.gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 #self.gray = self.cv_image
-                self.detect()
+                #self.detect()
 
             except CvBridgeError as e:
                 print ("QR Code node error" + str(e))
