@@ -11,13 +11,14 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  bebop_msgs
 )
 
 #----------CUSTOM OPENCV---------
 find_package(OpenCV REQUIRED
 NO_MODULE # should be optional, tells CMake to use config mode
-PATHS /usr/local # look here
-NO_DEFAULT_PATH) # and don't look anywhere else
+PATHS /usr/local) # look here
+# and don't look anywhere else
 #--------------------------------
 
 
@@ -138,7 +139,9 @@ include_directories(
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+#add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}) # -----editted-----
+# add_dependencies(bebop_msgs ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context

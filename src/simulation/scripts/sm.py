@@ -22,32 +22,29 @@ pub_state = rospy.Publisher("/state_machine/state",
 class takeoff(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['flying', 'erro'])
-        # rospy.Subscriber("/state_machine/takeoff_condition",
-        #                  String, self.callback)
+        rospy.Subscriber("/state_machine/takeoff_condition",
+                         String, self.callback)
         self.takeoff_topic = rospy.Publisher(
             "/bebop/takeoff", Empty, queue_size=1)
-        self.test_pub = rospy.Publisher("/x", Empty, queue_size=10)
-        # self.counter = 0
-        # self.condition = ""
+        self.condition = ""
 
-    # def callback(self, data):
-    #     print(data)
-    #     self.condition = data.data
+    def callback(self, data):
+        print(data)
+        self.condition = data.data
 
     def execute(self, userdata):
         rospy.loginfo('Executing state takeoff')
 
-        # while self.condition != "ok" and not rospy.is_shutdown():
-        #     pub_state.publish("takeoff")
-        #     sleep(0.1)
-        #     pass
-        for i in range(3000):
+        for i in range(2000):
             self.takeoff_topic.publish(Empty())
             rospy.sleep(0.001)
-            self.test_pub.publish()
 
-        rospy.sleep(4)
-        # self.condition = ""
+        while self.condition != "ok" and not rospy.is_shutdown():
+            pub_state.publish("takeoff")
+            sleep(0.1)
+            pass
+        rospy.loginfo('takeoff done')
+
         return 'flying'
 
 
@@ -60,29 +57,30 @@ class square(smach.State):
 
     def control(self, x, y, z):
         twist = Twist()
-        speed = 2
+        speed = 4
         twist.linear.x = x * speed
         twist.linear.y = y * speed
         twist.linear.z = z * speed
         twist.angular.x = 0
         twist.angular.y = 0
         twist.angular.z = 0
-        for i in range(2):
+        for i in range(20):
             self.move_topic.publish(twist)
             rospy.sleep(0.01)
 
     def execute(self, userdata):
         rospy.loginfo('Square')
-
-        self.control(1, 0, 0)
-        rospy.sleep(1)
-        self.control(0, 1, 0)
-        rospy.sleep(1)
+        self.control(1, 0, 1)
+        rospy.sleep(6)
+        self.control(2, 0, 0)
+        rospy.sleep(3)
+        self.control(1, 1, 0)
+        rospy.sleep(3)
         self.control(-1, 0, 0)
-        rospy.sleep(1)
-        self.control(0, -1, 0)
-        rospy.sleep(1)
-        self.control(0, 0, 0)
+        rospy.sleep(3)
+        self.control(1, -1, 0)
+        rospy.sleep(3)
+        self.control(1, 0, 0)
         self.condition = ""
         return 'done'
 
@@ -216,11 +214,11 @@ def main():
     with sm:
         # Add states to the container
         smach.StateMachine.add('takeoff', takeoff(),
-                               transitions={'flying': 'square',
+                               transitions={'flying': 'WINDOW',
                                             'erro': 'land'})
 
-        # smach.StateMachine.add('square', square(),
-        #                        transitions={'done': 'land_now', 'erro': 'land'})
+        smach.StateMachine.add('square', square(),
+                               transitions={'done': 'land_now', 'erro': 'land'})
 
         smach.StateMachine.add('follow', follow(),
                                transitions={'done': 'land_now', 'erro': 'land'})

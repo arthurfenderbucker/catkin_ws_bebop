@@ -54,15 +54,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-#Step 1 -
-
-#Step 2 - clear image with some source of absolute_import and convert to hsf
-
-#Step 3 - Define filters: color, brightness, lines, edges, whatever
-
-#Step 4 - Fit an square around the crocodile
-
-#Step 5 - Cut square image
-
-#Step 6 - Apply neural network to evaluate probability that it is an actual crocodile

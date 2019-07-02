@@ -45,7 +45,7 @@ catkin build
 
 finally run these commands
 ```
-echo "source /home/arthur/catkin_ws_bebop/devel/setup.bash" >> ~/.bashrc
+echo "source ~/catkin_ws_bebop/setup.sh" >> ~/.bashrc
 source ~/.bashrc
 ```
 

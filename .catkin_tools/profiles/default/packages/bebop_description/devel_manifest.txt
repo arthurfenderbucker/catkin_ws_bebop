@@ -1,4 +1,4 @@
 bebop_autonomy/bebop_description
-/home/caio/bebop_ws/devel/.private/bebop_description/lib/pkgconfig/bebop_description.pc /home/caio/bebop_ws/devel/lib/pkgconfig/bebop_description.pc
-/home/caio/bebop_ws/devel/.private/bebop_description/share/bebop_description/cmake/bebop_descriptionConfig.cmake /home/caio/bebop_ws/devel/share/bebop_description/cmake/bebop_descriptionConfig.cmake
-/home/caio/bebop_ws/devel/.private/bebop_description/share/bebop_description/cmake/bebop_descriptionConfig-version.cmake /home/caio/bebop_ws/devel/share/bebop_description/cmake/bebop_descriptionConfig-version.cmake
+/home/arthur/catkin_ws_bebop/devel/.private/bebop_description/share/bebop_description/cmake/bebop_descriptionConfig.cmake /home/arthur/catkin_ws_bebop/devel/share/bebop_description/cmake/bebop_descriptionConfig.cmake
+/home/arthur/catkin_ws_bebop/devel/.private/bebop_description/share/bebop_description/cmake/bebop_descriptionConfig-version.cmake /home/arthur/catkin_ws_bebop/devel/share/bebop_description/cmake/bebop_descriptionConfig-version.cmake
+/home/arthur/catkin_ws_bebop/devel/.private/bebop_description/lib/pkgconfig/bebop_description.pc /home/arthur/catkin_ws_bebop/devel/lib/pkgconfig/bebop_description.pc

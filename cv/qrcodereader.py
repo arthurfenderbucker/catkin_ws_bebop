@@ -4,16 +4,17 @@
 # sudo pip install pyzbar
 
 # reference https://www.pyimagesearch.com/2018/05/21/an-opencv-barcode-and-qr-code-scanner-with-zbar/
-
 from __future__ import print_function
+import rospy
 import cv2
 import gi
 import numpy as np
 from qrtools import QR
-from drone_video import Video
+#from drone_video import Video
 import pyzbar.pyzbar as pyzbar
-import CvBridge
-
+import cv_bridge
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
 def decode(im) :
   # Find barcodes and QR codes
   decodedObjects = pyzbar.decode(im)

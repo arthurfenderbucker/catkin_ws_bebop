@@ -29,6 +29,14 @@
           </shader>
         </material>-->
       </visual>
-    </link>
+    <!-- </link>
+    <include>
+      <uri>frame.sdf</uri>
+      <pose>0.09 0 0.04 0 0 0</pose>
+    </include> -->
+    <!-- <joint name="camera_joint" type="fixed">
+      <child>camera_ros::link</child>
+      <parent>base_link</parent>
+    </joint> -->
   </model>
 </sdf>

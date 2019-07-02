@@ -84,7 +84,7 @@ class CameraStabilization():
             p1, st, err = cv2.calcOpticalFlowPyrLK(
                 self.old_gray, frame_gray, self.p0, None, **self.lk_params)
 
-            if(type(p1) == 'NoneType'):
+            if(p1 is None):
                 print("frame contains no fetures")
                 return False
                 # self.resetFeatures(frame)
@@ -120,8 +120,9 @@ class CameraStabilization():
             else:
                 # forces to have more than 1 feature on the screen
                 print("last")
+                self.resetFeatures(frame)
                 return False
-                # self.resetFeatures(frame)
+                
 
                 # return the imagem movement in pixels and if this value ir precise or not
         return precise
@@ -151,18 +152,20 @@ class CameraStabilization():
         return list[mask_outlier], total_std
 
     def display(self, frame, good_new, good_old):  # draw stuff
+        print(len(good_new))
+        if not (good_new is None or good_old is None) and len(good_new)>1:
+            for i, (new, old) in enumerate(zip(good_new, good_old)):
+                a, b = new.ravel()
+                c, d = old.ravel()
 
-        for i, (new, old) in enumerate(zip(good_new, good_old)):
-            a, b = new.ravel()
-            c, d = old.ravel()
-
-            self.display_mask = cv2.line(
-                self.display_mask, (a, b), (c, d), self.color[i].tolist(), 2)
-            frame = cv2.circle(frame, (a, b), 5, self.color[i].tolist(), -1)
-        pos_mean = good_new.mean(0)
-        frame = cv2.circle(
-            frame, (pos_mean[0], pos_mean[1]), 10, [255, 0, 0], -1)
-
+                self.display_mask = cv2.line(
+                    self.display_mask, (a, b), (c, d), self.color[i].tolist(), 2)
+                frame = cv2.circle(frame, (a, b), 5, self.color[i].tolist(), -1)
+            pos_mean = good_new.mean(0)
+            frame = cv2.circle(
+                frame, (pos_mean[0], pos_mean[1]), 10, [255, 0, 0], -1)
+        else:
+            self.clearMask()
         img = cv2.add(frame, self.display_mask)
         cv2.imshow('frame', img)
 
@@ -211,9 +214,17 @@ def main():
         if rows > 1 and cols > 1:
             c.update(frame)
             cv2.imshow("cam", frame)
+            if c.feature_positions is not None:
+                print(c.get_pos_mean())
+
         k = cv2.waitKey(1)
         if k == 27:
             break
+        elif k == 'r' or k == ord('r'):
+            print("r pressed ")
+            c.resetFeatures(frame)
+        elif k == ord('p') or k == 'p': 
+            c.clearMask()
 
 
 if __name__ == "__main__":
