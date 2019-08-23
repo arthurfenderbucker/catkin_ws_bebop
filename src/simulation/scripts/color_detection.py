@@ -1,8 +1,21 @@
 import cv2
 import argparse
+import rospy
+from sensor_msgs.msg import Image
+from std_msgs.msg import String
+from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
- 
+
+image_sub = rospy.Subscriber(
+            "/bebop/image_raw", Image, img_callback, queue_size=None)
+
+
+rospy.init_node('color_finder', anonymous=True)
+
 colors = np.random.randint(0, 255, (10, 3))
+
+def img_callback(data):
+    return
 
 def callback(): #trackbar callback
     pass
@@ -62,11 +75,9 @@ def crop_rect(img, rect):
 
 def main():
     args = get_arguments()
- 
     range_filter = args['filter'].upper()
- 
+
     camera = cv2.VideoCapture(0)
- 
     setup_trackbars(range_filter)
  
     while True:
@@ -130,7 +141,6 @@ def main():
  
         if cv2.waitKey(1) & 0xFF is 27:
             break
-
 
 
 def area_and_perp( points):
