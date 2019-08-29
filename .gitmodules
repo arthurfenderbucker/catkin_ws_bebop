@@ -1,2 +1,10 @@
 [submodule "src/orb_slam_2_ros"]
 	url = https://github.com/appliedAI-Initiative/orb_slam_2_ros.git
+[submodule "src/usb_cam"]
+	url = https://github.com/ros-drivers/usb_cam.git
+[submodule "src/image_pipeline"]
+        url = https://github.com/ros-perception/image_pipeline.git
+[submodule "src/image_common"]
+        url = https://github.com/ros-perception/image_common.git 
+[submodule "src/simulation/scripts/yolo3"]
+	url = https://github.com/qqwweee/keras-yolo3.git
