@@ -1,13 +1,22 @@
 #!/usr/bin/env python
-from __future__ import print_function
+import rospy
 import cv2
 import numpy as np
+from sensor_msgs.msg import Image
 import rospkg
 
-rospack = rospkg.RosPack()
+from cv_bridge import CvBridge, CvBridgeError
+
+
+
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from matplotlib import colors
+import matplotlib.pyplot as plt
 
 import json
 
+rospack = rospkg.RosPack()
 config_path = str(rospack.get_path('simulation')+'/config/color_config.json')
 
 
@@ -15,13 +24,19 @@ class color_detection():
     colors = np.random.randint(0, 255, (10, 3))
     color_tracking = True
     def __init__(self,color="blue"):
-
         #get min and max HSV values from config file
+        self.color = color
         with open(config_path) as json_data_file:
-            config_data = json.load(json_data_file)
+            self.config_data = json.load(json_data_file)
+        print(self.config_data)
+        if color in self.config_data.keys():
+            print("existing color selected!")     
+        else:
+            print("new color selected!")
+            self.config_data[color] = {"min":{"H":0,"S":0,"V":0}, "max":{"H":255,"S":255,"V":255}}
 
-        self.min_values = config_data[color]["min"].values()
-        self.max_values = config_data[color]["max"].values() 
+        self.min_values = self.config_data[color]["min"].values()
+        self.max_values = self.config_data[color]["max"].values()
         self.calibrate()
     
     def crop_rect(self, img, rect):
@@ -44,30 +59,9 @@ class color_detection():
     def nothing(self,x):
         pass
     def get_rect(self,image, show = True):
-        # cv2.namedWindow('Trackbar window')
-        # # create trackbars for color change
-        # cv2.createTrackbar('H_high', 'Trackbar window', 0, 255, self.nothing)
-        # cv2.createTrackbar('S_high', 'Trackbar window', 0, 255, self.nothing)
-        # cv2.createTrackbar('V_high', 'Trackbar window', 0, 255, self.nothing)
-        # cv2.createTrackbar('H_low', 'Trackbar window', 0, 255, self.nothing)
-        # cv2.createTrackbar('S_low', 'Trackbar window', 0, 255, self.nothing)
-        # cv2.createTrackbar('V_low', 'Trackbar window', 0, 255, self.nothing)
-
-        # self.calibrate()
-        cv2.imshow('Trackbars', np.zeros((1, 512, 3), np.uint8))
-        cv2.waitKey(1)
-
-        # h_low = cv2.getTrackbarPos('H_low', 'Trackbar window')
-        # s_low = cv2.getTrackbarPos('S_low', 'Trackbar window')
-        # v_low = cv2.getTrackbarPos('V_low', 'Trackbar window')
-        # h_high = cv2.getTrackbarPos('H_high', 'Trackbar window')
-        # s_high = cv2.getTrackbarPos('S_high', 'Trackbar window')
-        # v_high = cv2.getTrackbarPos('V_high', 'Trackbar window')
-
-
         
         frame_to_thresh = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) #convert to HSV
-        
+        # cv2.imshow("Trackbars",self.color_range_image)
         thresh = cv2.inRange(frame_to_thresh,tuple(self.min_values), tuple(self.max_values))
 
         # ignore random noise and merge very close areas
@@ -125,12 +119,46 @@ class color_detection():
             cv2.imshow("Mask", mask)
         return [None, None, None]
 
+    def save_color(self):
+        with open(config_path, 'w') as json_data_file:
+            json.dump(self.config_data, json_data_file)
+        print("changes saved!")
+
     def calibrate(self):
         self.setup_trackbars()
         # pass
     def tracker_callback(self,x):
-        # print(x)
-        pass
+        for k,j in enumerate("HSV"):
+            self.min_values[k] = cv2.getTrackbarPos("min_%s" % (j), "Trackbars")
+            self.config_data[self.color]["min"][j] = self.min_values[k]
+
+            self.max_values[k] = cv2.getTrackbarPos("max_%s" % (j), "Trackbars")
+            self.config_data[self.color]["max"][j] = self.max_values[k]
+        
+        #update the gradient
+        # self.color_range_image = self.get_color_range_image()
+
+    # def get_color_range_image(self):
+    #     # fig = plt.figure()
+    #     # axis = fig.add_subplot(1, 1, 1, projection="3d")
+
+    #     # h_array = np.ones((5,1), dtype=np.uint8)*np.linspace(self.min_values[0], self.max_values[0], 5, dtype=np.uint8)
+    #     # s_array = np.ones((5,1), dtype=np.uint8)*np.linspace(self.min_values[1], self.max_values[1], 5, dtype=np.uint8)
+    #     # v_array = np.ones((5,1), dtype=np.uint8)*np.linspace(self.min_values[2], self.max_values[2], 5, dtype=np.uint8)
+    #     # hsv_coords = np.array(np.meshgrid(h_array,s_array,v_array)).T.reshape(1,-1,3)
+    #     # print(hsv_coords.shape)
+    #     # rgb_coords = cv2.cvtColor(hsv_coords, cv2.COLOR_HSV2RGB)
+    #     # print(rgb_coords.shape)
+    #     # axis.scatter(r.flatten(), g.flatten(), b.flatten(), facecolors=pixel_colors, marker=".")
+    #     # axis.set_xlabel("Red")
+    #     # axis.set_ylabel("Green")
+    #     # axis.set_zlabel("Blue")
+    #     # plt.show()
+    #     # for hue in h_array:
+    #     #     h = hue*np.ones((500,500), dtype=np.uint8)
+    #     #     hsv_color = cv2.merge((h, s_gradient, v_gradient))
+    #     #     rgb_color = cv2.cvtColor(hsv_color, cv2.COLOR_HSV2BGR)
+    #     #     print(rgb_color)
 
     def setup_trackbars(self):
         cv2.namedWindow("Trackbars", 0)
@@ -141,10 +169,28 @@ class color_detection():
             cv2.createTrackbar("max_%s" % (j), "Trackbars", self.max_values[k], 255, self.tracker_callback)
 
 def main():
+    print("please, write the color that you want to calibrate or the name of new one")
 
-    print("init")
-    c = color_detection()
+    color_name = raw_input("color to calibrate (Enter): ")
+    c = color_detection(color=color_name)
+    img_topic = "/usb_cam/image_raw"#"/bebop/image_raw"#
+    bridge = CvBridge()
+    rospy.init_node('test_ros_image', anonymous=True)
+    
+    while not rospy.is_shutdown():
+        data = rospy.wait_for_message(img_topic, Image)
+        try:
+            cv_image = bridge.imgmsg_to_cv2(data, "bgr8")
+        except CvBridgeError as e:
+            print(e)
 
+        (rows, cols, channels) = cv_image.shape
+        if not (cols > 60 and rows > 60):  # returns if data have unvalid shape
+            continue
+        c.get_rect(cv_image)
+        k = cv2.waitKey(5)
+        if k == 27 : break  #esc pressed
+        elif  k == ord("s"): c.save_color()
  
 if __name__ == '__main__':
     main()
