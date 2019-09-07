@@ -1,4 +1,5 @@
 bebop_autonomy/bebop_description
+/home/arthur/catkin_ws_bebop/devel/.private/bebop_description/cmake.lock /home/arthur/catkin_ws_bebop/devel/./cmake.lock
+/home/arthur/catkin_ws_bebop/devel/.private/bebop_description/lib/pkgconfig/bebop_description.pc /home/arthur/catkin_ws_bebop/devel/lib/pkgconfig/bebop_description.pc
 /home/arthur/catkin_ws_bebop/devel/.private/bebop_description/share/bebop_description/cmake/bebop_descriptionConfig.cmake /home/arthur/catkin_ws_bebop/devel/share/bebop_description/cmake/bebop_descriptionConfig.cmake
 /home/arthur/catkin_ws_bebop/devel/.private/bebop_description/share/bebop_description/cmake/bebop_descriptionConfig-version.cmake /home/arthur/catkin_ws_bebop/devel/share/bebop_description/cmake/bebop_descriptionConfig-version.cmake
-/home/arthur/catkin_ws_bebop/devel/.private/bebop_description/lib/pkgconfig/bebop_description.pc /home/arthur/catkin_ws_bebop/devel/lib/pkgconfig/bebop_description.pc
