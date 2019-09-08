@@ -8,21 +8,29 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 from color_detection import color_detection
 
-c = color_detection("red")
-img_topic = "/usb_cam/image_raw"#"/bebop/image_raw"#
+from feature_detection import feature_detection
+
+
+
+f = feature_detection()
+
+
+
+c = color_detection("green")
+img_topic = "/bebop/image_raw"#"/usb_cam/image_raw"#
 bridge = CvBridge()
 rospy.init_node('test_ros_image', anonymous=True)
 ref_pub = rospy.Publisher('/control/align_reference/ref_point', Point, queue_size=1)
 
-(major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
-print(major_ver, minor_ver, subminor_ver)
 
  
-    # Set up tracker.
-    # Instead of MIL, you can also use
+# Set up tracker.
+# Instead of MIL, you can also use
  
 tracker_types = ['BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'CSRT', 'MOSSE']
 tracker_type = tracker_types[4]
+
+(major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
 
 if int(minor_ver) < 3:
     tracker = cv2.Tracker_create(tracker_type)
@@ -48,7 +56,7 @@ bbox = (287, 23, 86, 320)
 
 
 def img_callback(data):
-    global tracking_count, bbox
+    
     try:
         cv_image = bridge.imgmsg_to_cv2(data, "bgr8")
     except CvBridgeError as e:
@@ -59,41 +67,16 @@ def img_callback(data):
         return
     # print("ok")
     # frame = cv_image.copy()
-    # tracking_count += 1
-    # if tracking_count == 1:
-    #     bbox = cv2.selectROI(frame, False)
-    #     ok = tracker.init(frame, bbox)
-    # # Start timer
-    # timer = cv2.getTickCount()
-
-    # # Update tracker
-    # ok, bbox = tracker.update(frame)
-
-    # # Calculate Frames per second (FPS)
-    # fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer);
-
-    # # Draw bounding box
-    # if ok:
-    #     # Tracking success
-    #     p1 = (int(bbox[0]), int(bbox[1]))
-    #     p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
-    #     cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
-    # else :
-    #     # Tracking failure
-    #     cv2.putText(frame, "Tracking failure detected", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
-
-    # # Display tracker type on frame
-    # cv2.putText(frame, tracker_type + " Tracker", (100,20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50),2);
     
-    # # Display FPS on frame
-    # cv2.putText(frame, "FPS : " + str(int(fps)), (100,50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50), 2);
+    # feature(cv_image)
+    # track(cv_image)
+    color(cv_image)
+    k = cv2.waitKey(1) & 0xff
+    # if k == 27 : break
+def feature(frame):
+    f.get_rect(frame)
 
-    # # Display result
-    # cv2.imshow("Tracking", frame)
- 
-
-
-    # cv2.imshow("original", cv_image)
+def color(cv_image):
     center,radius,rect = c.get_rect(cv_image)
     if center != None:
         
@@ -105,12 +88,41 @@ def img_callback(data):
         print(radius)
         if radius > 30: 
             ref_pub.publish(p)   
-    k = cv2.waitKey(1) & 0xff
-    # if k == 27 : break
-    
-    
-    
 
+def track(frame):
+    global tracking_count, bbox
+
+    tracking_count += 1
+    if tracking_count == 1:
+        bbox = cv2.selectROI(frame, False)
+        ok = tracker.init(frame, bbox)
+    # Start timer
+    timer = cv2.getTickCount()
+
+    # Update tracker
+    ok, bbox = tracker.update(frame)
+
+    # Calculate Frames per second (FPS)
+    fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer);
+
+    # Draw bounding box
+    if ok:
+        # Tracking success
+        p1 = (int(bbox[0]), int(bbox[1]))
+        p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
+        cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
+    else :
+        # Tracking failure
+        cv2.putText(frame, "Tracking failure detected", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
+
+    # Display tracker type on frame
+    cv2.putText(frame, tracker_type + " Tracker", (100,20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50),2);
+    
+    # Display FPS on frame
+    cv2.putText(frame, "FPS : " + str(int(fps)), (100,50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50), 2);
+
+    # Display result
+    cv2.imshow("Tracking", frame)
 
 
 print("init")

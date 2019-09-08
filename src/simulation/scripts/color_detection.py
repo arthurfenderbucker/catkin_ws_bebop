@@ -22,7 +22,6 @@ class color_detection():
 
         self.min_values = config_data[color]["min"].values()
         self.max_values = config_data[color]["max"].values() 
-        self.calibrate()
     
     def crop_rect(self, img, rect):
         # get the parameter of the small rectangle
@@ -44,28 +43,7 @@ class color_detection():
     def nothing(self,x):
         pass
     def get_rect(self,image, show = True):
-        # cv2.namedWindow('Trackbar window')
-        # # create trackbars for color change
-        # cv2.createTrackbar('H_high', 'Trackbar window', 0, 255, self.nothing)
-        # cv2.createTrackbar('S_high', 'Trackbar window', 0, 255, self.nothing)
-        # cv2.createTrackbar('V_high', 'Trackbar window', 0, 255, self.nothing)
-        # cv2.createTrackbar('H_low', 'Trackbar window', 0, 255, self.nothing)
-        # cv2.createTrackbar('S_low', 'Trackbar window', 0, 255, self.nothing)
-        # cv2.createTrackbar('V_low', 'Trackbar window', 0, 255, self.nothing)
-
-        # self.calibrate()
-        cv2.imshow('Trackbars', np.zeros((1, 512, 3), np.uint8))
-        cv2.waitKey(1)
-
-        # h_low = cv2.getTrackbarPos('H_low', 'Trackbar window')
-        # s_low = cv2.getTrackbarPos('S_low', 'Trackbar window')
-        # v_low = cv2.getTrackbarPos('V_low', 'Trackbar window')
-        # h_high = cv2.getTrackbarPos('H_high', 'Trackbar window')
-        # s_high = cv2.getTrackbarPos('S_high', 'Trackbar window')
-        # v_high = cv2.getTrackbarPos('V_high', 'Trackbar window')
-
-
-        
+                
         frame_to_thresh = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) #convert to HSV
         
         thresh = cv2.inRange(frame_to_thresh,tuple(self.min_values), tuple(self.max_values))
@@ -125,25 +103,20 @@ class color_detection():
             cv2.imshow("Mask", mask)
         return [None, None, None]
 
-    def calibrate(self):
-        self.setup_trackbars()
-        # pass
-    def tracker_callback(self,x):
-        # print(x)
-        pass
-
-    def setup_trackbars(self):
-        cv2.namedWindow("Trackbars", 0)
-
-        for k,j in enumerate("HSV"):
-            cv2.createTrackbar("min_%s" % (j), "Trackbars", self.min_values[k], 255, self.tracker_callback)
-        for k,j in enumerate("HSV"):
-            cv2.createTrackbar("max_%s" % (j), "Trackbars", self.max_values[k], 255, self.tracker_callback)
+   
 
 def main():
 
     print("init")
     c = color_detection()
+    cap = cv2.VideoCapture(0)
+    while 1:
+        ret, frame = cap.read()
+        if ret:
+            c.get_rect(frame)
+        k = cv2.waitKey(1)
+        if k == 27: break # esc pressed
+
 
  
 if __name__ == '__main__':

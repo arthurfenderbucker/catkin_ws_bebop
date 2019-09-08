@@ -8,18 +8,25 @@ from std_msgs.msg import Bool
 from PID import PID
 
 class adjust_position():
-    image_shape = np.array([640,460])
+    image_shape = np.array([620,430])
     bool_align = False
     last_ref_point_time = 0
     
     goal_point = np.append( image_shape.copy() / 2, 200 ) # center of the image as default
-    target_point = goal_point.copy() 
+    current_point = goal_point.copy() 
     precision = np.array([20,20,5]) # pixels
 
     count_aligned = 0
     # angle relative to camera's perpenficular vector 
     align_angle = 0 
     
+
+    pid_x = PID(P=0.002,I=-0.0001,D=0.0005)
+    pid_y = PID(P=0.002,I=-0.0001,D=0.0005)
+    pid_z = PID(P=0.002,I=-0.0001,D=0.0005)
+    pid_x.setPoint(goal_point[0])
+    pid_y.setPoint(goal_point[1])
+    pid_z.setPoint(goal_point[2])
 
     def __init__(self):
 
@@ -34,30 +41,35 @@ class adjust_position():
         self.alginned = rospy.Publisher(
             "/control/align_reference/aligned", Bool, queue_size=1)
 
+        
+
     # ================ topic callback functions ===================
 
     def point_callback(self, data): #point
         self.last_ref_point_time = rospy.get_time()
         self.bool_align = True
 
-        self.target_point = np.array([data.x,data.y,data.z])
+        self.current_point = np.array([data.x,data.y,data.z])
         
     def set_image_shape(self,data): #point
         self.image_shape =  np.array([data.x,data.y])
-        self.target_point = self.goal_point
+        self.current_point = self.goal_point.copy()
     def set_precision(self, data): #point
         self.precision =  np.array([data.x,data.y,data.z])
     def set_goal_point(self,data): #point
         self.goal_point = np.array([data.x,data.y,data.z])
+        self.pid_x.setPoint(data.x)
+        self.pid_y.setPoint(data.y)
+        self.pid_z.setPoint(data.z)
 
     # ================== control functions ========================
     def pub_vel(self,vel):
         setted_vel = Twist()
 
         # note: add angle correction
-        setted_vel.linear.x = 0#-vel[0] 
-        setted_vel.linear.y = 0#vel[2]
-        setted_vel.linear.z = -vel[1]
+        setted_vel.linear.x = vel[2] 
+        setted_vel.linear.y = vel[0]
+        setted_vel.linear.z = vel[1]
 
         self.setpoint_vel_pub.publish(setted_vel)
 
@@ -79,16 +91,25 @@ class adjust_position():
             self.rate.sleep()
 
     def calculate_vel(self):
-        delta = self.target_point - self.goal_point
+        
+        vel = np.array([0.0,0.0,0.0])
+
+        vel[0] = self.pid_x.update(self.current_point[0])
+        vel[1] = self.pid_y.update(self.current_point[1])
+        vel[2] = self.pid_z.update(self.current_point[2])
+        rospy.loginfo(vel)
+        return vel
+
+        delta = self.current_point - self.goal_point
 
         rospy.loginfo(delta)
-        vel = np.array([0.0,0.0,0.0])
+        
         if abs(delta[0]) > self.precision[0] or abs(delta[1]) > self.precision[1]:
             vel[0] = np.sign(
-                delta[0]) * min(np.abs(delta[0]) / 20, 0.2)
+                delta[0]) * min(np.abs(delta[0]) / 160, 0.1)
             
             vel[1] = np.sign(
-                delta[1]) * min(np.abs(delta[1]) / 20, 0.2)
+                delta[1]) * min(np.abs(delta[1]) / 160, 0.1)
             self.count_aligned = 0
 
         if abs(delta[2]) > self.precision[2] and abs(delta[0]) < self.precision[1] and abs(delta[1]) < self.precision[0]: 

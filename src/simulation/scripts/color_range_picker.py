@@ -135,30 +135,6 @@ class color_detection():
             self.max_values[k] = cv2.getTrackbarPos("max_%s" % (j), "Trackbars")
             self.config_data[self.color]["max"][j] = self.max_values[k]
         
-        #update the gradient
-        # self.color_range_image = self.get_color_range_image()
-
-    # def get_color_range_image(self):
-    #     # fig = plt.figure()
-    #     # axis = fig.add_subplot(1, 1, 1, projection="3d")
-
-    #     # h_array = np.ones((5,1), dtype=np.uint8)*np.linspace(self.min_values[0], self.max_values[0], 5, dtype=np.uint8)
-    #     # s_array = np.ones((5,1), dtype=np.uint8)*np.linspace(self.min_values[1], self.max_values[1], 5, dtype=np.uint8)
-    #     # v_array = np.ones((5,1), dtype=np.uint8)*np.linspace(self.min_values[2], self.max_values[2], 5, dtype=np.uint8)
-    #     # hsv_coords = np.array(np.meshgrid(h_array,s_array,v_array)).T.reshape(1,-1,3)
-    #     # print(hsv_coords.shape)
-    #     # rgb_coords = cv2.cvtColor(hsv_coords, cv2.COLOR_HSV2RGB)
-    #     # print(rgb_coords.shape)
-    #     # axis.scatter(r.flatten(), g.flatten(), b.flatten(), facecolors=pixel_colors, marker=".")
-    #     # axis.set_xlabel("Red")
-    #     # axis.set_ylabel("Green")
-    #     # axis.set_zlabel("Blue")
-    #     # plt.show()
-    #     # for hue in h_array:
-    #     #     h = hue*np.ones((500,500), dtype=np.uint8)
-    #     #     hsv_color = cv2.merge((h, s_gradient, v_gradient))
-    #     #     rgb_color = cv2.cvtColor(hsv_color, cv2.COLOR_HSV2BGR)
-    #     #     print(rgb_color)
 
     def setup_trackbars(self):
         cv2.namedWindow("Trackbars", 0)
@@ -173,7 +149,7 @@ def main():
 
     color_name = raw_input("color to calibrate (Enter): ")
     c = color_detection(color=color_name)
-    img_topic = "/usb_cam/image_raw"#"/bebop/image_raw"#
+    img_topic = "/bebop/image_raw"#"/usb_cam/image_raw"#
     bridge = CvBridge()
     rospy.init_node('test_ros_image', anonymous=True)
     
