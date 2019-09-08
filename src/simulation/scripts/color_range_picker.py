@@ -149,7 +149,7 @@ def main():
 
     color_name = raw_input("color to calibrate (Enter): ")
     c = color_detection(color=color_name)
-    img_topic = "/bebop/image_raw"#"/usb_cam/image_raw"#
+    img_topic = "/usb_cam/image_raw"#"/bebop/image_raw"#
     bridge = CvBridge()
     rospy.init_node('test_ros_image', anonymous=True)
     

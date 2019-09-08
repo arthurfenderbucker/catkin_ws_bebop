@@ -16,8 +16,8 @@ f = feature_detection()
 
 
 
-c = color_detection("green")
-img_topic = "/bebop/image_raw"#"/usb_cam/image_raw"#
+c = color_detection("yellow")
+img_topic = "/usb_cam/image_raw"#"/bebop/image_raw"#
 bridge = CvBridge()
 rospy.init_node('test_ros_image', anonymous=True)
 ref_pub = rospy.Publisher('/control/align_reference/ref_point', Point, queue_size=1)
@@ -69,8 +69,8 @@ def img_callback(data):
     # frame = cv_image.copy()
     
     # feature(cv_image)
-    # track(cv_image)
-    color(cv_image)
+    track(cv_image)
+    # color(cv_image)
     k = cv2.waitKey(1) & 0xff
     # if k == 27 : break
 def feature(frame):

@@ -8,7 +8,7 @@ from std_msgs.msg import Bool
 from PID import PID
 
 class adjust_position():
-    image_shape = np.array([620,430])
+    image_shape = np.array([856,480])
     bool_align = False
     last_ref_point_time = 0
     
@@ -17,13 +17,14 @@ class adjust_position():
     precision = np.array([20,20,5]) # pixels
 
     count_aligned = 0
-    # angle relative to camera's perpenficular vector 
-    align_angle = 0 
+
+    # vertical angle between camera's perpenficular vector and horizontal plane
+    camera_angle = 1.57
     
 
-    pid_x = PID(P=0.002,I=-0.0001,D=0.0005)
-    pid_y = PID(P=0.002,I=-0.0001,D=0.0005)
-    pid_z = PID(P=0.002,I=-0.0001,D=0.0005)
+    pid_x = PID(P=0.0003,I=-0.0000,D=0.0001)
+    pid_y = PID(P=0.0003,I=-0.0000,D=0.0001)
+    pid_z = PID(P=0.0003,I=-0.0000,D=0.0001)
     pid_x.setPoint(goal_point[0])
     pid_y.setPoint(goal_point[1])
     pid_z.setPoint(goal_point[2])
@@ -36,6 +37,11 @@ class adjust_position():
                     "/control/align_reference/ref_point", Point, self.point_callback, queue_size=None)
         rospy.Subscriber(
                     "/control/align_reference/set_image_shape", Point, self.set_image_shape, queue_size=None)
+        rospy.Subscriber(
+                    "/control/align_reference/set_goal_point", Point, self.set_goal_point, queue_size=None)
+        
+        # rospy.Subscriber(
+        #             "/control/align_reference/set_camera_angle", Float, self.set_camera_angle, queue_size=None)
         
         self.setpoint_vel_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size=1)
         self.alginned = rospy.Publisher(
@@ -61,7 +67,11 @@ class adjust_position():
         self.pid_x.setPoint(data.x)
         self.pid_y.setPoint(data.y)
         self.pid_z.setPoint(data.z)
+        self.bool_align = False
+        self.count_aligned = 0
 
+    def set_camera_angle(self,data):#float
+        self.camera_angle = data
     # ================== control functions ========================
     def pub_vel(self,vel):
         setted_vel = Twist()
@@ -92,40 +102,35 @@ class adjust_position():
 
     def calculate_vel(self):
         
-        vel = np.array([0.0,0.0,0.0])
+        vel_raw = np.array([0.0,0.0,0.0])
 
-        vel[0] = self.pid_x.update(self.current_point[0])
-        vel[1] = self.pid_y.update(self.current_point[1])
-        vel[2] = self.pid_z.update(self.current_point[2])
+        vel_raw[0] = self.pid_x.update(self.current_point[0])
+        vel_raw[1] = self.pid_y.update(self.current_point[1])
+        vel_raw[2] = self.pid_z.update(self.current_point[2])
+        
+        
+        cos = np.cos(self.camera_angle)
+        sin = np.sin(self.camera_angle)
+        print(sin, cos)
+        camera_tf = np.array([[ 1.0,0.0,0.0],
+                              [ 0.0,cos,-sin],
+                              [ 0.0,sin,cos]])
+        vel = np.dot(camera_tf,vel_raw)
         rospy.loginfo(vel)
-        return vel
-
-        delta = self.current_point - self.goal_point
-
-        rospy.loginfo(delta)
         
-        if abs(delta[0]) > self.precision[0] or abs(delta[1]) > self.precision[1]:
-            vel[0] = np.sign(
-                delta[0]) * min(np.abs(delta[0]) / 160, 0.1)
-            
-            vel[1] = np.sign(
-                delta[1]) * min(np.abs(delta[1]) / 160, 0.1)
+        if abs(self.pid_x.getError()) > self.precision[0] or abs(self.pid_y.getError()) > self.precision[1] or abs(self.pid_z.getError()) > self.precision[2]:
+            self.bool_align = False
             self.count_aligned = 0
-
-        if abs(delta[2]) > self.precision[2] and abs(delta[0]) < self.precision[1] and abs(delta[1]) < self.precision[0]: 
-            #only align the z after the object is centralized
-            vel[2] = np.sign(
-                delta[2]) * min(np.abs(delta[2]) / 20, 0.2)
-            self.count_aligned = 0
-        
-
-        self.count_aligned += 1
+        else:
+            self.count_aligned += 1
 
         if self.count_aligned > 3:
             rospy.loginfo("ALIGNED!!")
             self.bool_align = True
             self.alginned.publish(True)
+        
         return vel
+
     
 def main():
 

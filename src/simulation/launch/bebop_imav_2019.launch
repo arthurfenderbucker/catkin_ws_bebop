@@ -10,9 +10,9 @@
   <arg name="x" default="0.0"/>
   <arg name="y" default="0.0"/>
   <arg name="z" default="0.3"/>
-  <arg name="Y" default="1.57"/>
+  <!-- <arg name="Y" default="1.57"/>
   <arg name="P" default="0.0"/>
-  <arg name="R" default="0.0"/>
+  <arg name="R" default="0.0"/> -->
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find simulation)/worlds/imav_indoor.world"/>
@@ -27,9 +27,9 @@
     <arg name="x" value="$(arg x)"/>
     <arg name="y" value="$(arg y)"/>
     <arg name="z" value="$(arg z)"/>
-    <arg name="Y" value="$(arg Y)"/>
+    <!-- <arg name="Y" value="$(arg Y)"/>
     <arg name="P" value="$(arg P)"/>
-    <arg name="R" value="$(arg R)"/>
+    <arg name="R" value="$(arg R)"/> -->
   </include>
   <!-- <node pkg="rostopic" type="rostopic" name="takeoffbaby" args="pub /bebop/takeoff std_msgs/Empty '{}'" output="screen"/> -->
 
