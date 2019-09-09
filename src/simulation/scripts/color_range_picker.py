@@ -62,7 +62,12 @@ class color_detection():
         
         frame_to_thresh = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) #convert to HSV
         # cv2.imshow("Trackbars",self.color_range_image)
-        thresh = cv2.inRange(frame_to_thresh,tuple(self.min_values), tuple(self.max_values))
+        if self.min_values[0]<self.max_values[0]: #for colors close to red with hue value close to 0 and 180 
+            thresh = cv2.inRange(frame_to_thresh,tuple(self.min_values), tuple(self.max_values))
+        else:
+            thresh1 = cv2.inRange(frame_to_thresh,(0,self.min_values[1],self.min_values[2]), (self.min_values[0],self.max_values[1],self.max_values[2]))
+            thresh2 = cv2.inRange(frame_to_thresh,(self.max_values[0],self.min_values[1],self.min_values[2]), (255,self.max_values[1],self.max_values[2]))
+            thresh = cv2.bitwise_or(thresh1, thresh2)
 
         # ignore random noise and merge very close areas
         kernel = np.ones((5,5),np.uint8) 
