@@ -1,0 +1,10 @@
+<launch>
+    <arg name="image_topic" default="/usb_cam/image_raw"/>
+    <arg name="pub_topic" default="/cv_detection/color_range/detection"/>
+
+    <node pkg="cv_detection" name="calibrate_color_range" type="color_range.py" output="screen">
+      <param name="image_topic" type="string" value="$(arg image_topic)" />
+      <param name="pub_topic" type="string" value="$(arg pub_topic)" />
+      <param name="calibrate" type="bool" value="true"/>
+    </node>
+</launch>

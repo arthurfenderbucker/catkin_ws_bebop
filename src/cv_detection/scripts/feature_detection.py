@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 
 rospack = rospkg.RosPack()
 
-config_path = str(rospack.get_path('simulation')+'/config/feature_config.json')
-images_path = str(rospack.get_path('simulation')+'/config/img/')
+config_path = str(rospack.get_path('cv_detection')+'/config/feature_config.json')
+images_path = str(rospack.get_path('cv_detection')+'/config/img/')
 
 class feature_detection():
     def __init__(self,image_name="H.png"):

@@ -6,18 +6,19 @@ from geometry_msgs.msg import Point
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
-from color_detection import color_detection
+# from cv_detection.color_detection import color_detection
+from std_msgs.msg import Bool
+# from cv_detection import feature_detection
+# from cv_detection import detect_window
 
-from feature_detection import feature_detection
 
-
-
+d = detect_window()
 f = feature_detection()
 
 
 
-c = color_detection("yellow")
-img_topic = "/usb_cam/image_raw"#"/bebop/image_raw"#
+c = color_detection("red")
+img_topic = "/bebop/image_raw"#"/usb_cam/image_raw"#
 bridge = CvBridge()
 rospy.init_node('test_ros_image', anonymous=True)
 ref_pub = rospy.Publisher('/control/align_reference/ref_point', Point, queue_size=1)
@@ -69,8 +70,9 @@ def img_callback(data):
     # frame = cv_image.copy()
     
     # feature(cv_image)
-    track(cv_image)
+    # track(cv_image)
     # color(cv_image)
+    d.update(cv_image)
     k = cv2.waitKey(1) & 0xff
     # if k == 27 : break
 def feature(frame):
@@ -129,7 +131,7 @@ print("init")
 
 image_sub = rospy.Subscriber(
             img_topic, Image, img_callback, queue_size=None)
-
+# aligned_sub = rospy.Subscriber("/control/align_reference/aligned", Bool, take_box, queue_size=1)
 
 try:
     rospy.spin()

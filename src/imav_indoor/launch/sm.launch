@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+<!-- <node name="Controle" pkg="dronecontrol" type="controle.py" launch-prefix="xterm -e" /> -->
+<node name="State_machine" pkg="imav_indoor" type="sm.py" />
+<node name="rectangle_detector" pkg="cv_detection" type="rectangle_detector.py">
+    <param name="running" type="bool" value="false"/>
+</node>
+<node name="color_range" pkg="cv_detection" type="color_range.py">
+    <param name="running" type="bool" value="false"/>
+</node>
+<!-- <include file="$(find imav_indoor)/launch/nodes.xml"/> -->
+</launch>
+<!--  -->
+

@@ -1,7 +1,13 @@
 #!/usr/bin/env python
 import numpy as np
 import cv2
-from color_detection import color_detection
+from cv_detection import color_detection
+
+from cv_detection import detect_window
+
+
+d = detect_window()
+
 # print(cv2.ocl.haveOpenCL())
 # face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 # if face_cascade.empty(): raise Exception("your face_cascade is empty. are you sure, the path is correct ?")
@@ -32,6 +38,7 @@ while(video.isOpened()):
         #     # for (ex,ey,ew,eh) in eyes:
         #     #     cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
         # cv2.imshow('Video', frame)
-        pass
+        d.update(frame)
+        
     if cv2.waitKey(1) & 0xFF == 27:
         break

@@ -8,3 +8,5 @@
         url = https://github.com/ros-perception/image_common.git 
 [submodule "src/bebop_autonomy"]
         url = https://github.com/AutonomyLab/bebop_autonomy.git
+[submodule "src/cv_detection/scripts/yolo3"]
+	url = https://github.com/qqwweee/keras-yolo3.git

@@ -12,9 +12,9 @@ class adjust_position():
     bool_align = False
     last_ref_point_time = 0
     
-    goal_point = np.append( image_shape.copy() / 2, 200 ) # center of the image as default
+    goal_point = np.append( image_shape.copy() / 2, 160 ) # center of the image as default
     current_point = goal_point.copy() 
-    precision = np.array([20,20,5]) # pixels
+    precision = np.array([40,40,5]) # pixels
 
     count_aligned = 0
 
@@ -22,9 +22,9 @@ class adjust_position():
     camera_angle = 1.57
     
 
-    pid_x = PID(P=0.0003,I=-0.0000,D=0.0001)
-    pid_y = PID(P=0.0003,I=-0.0000,D=0.0001)
-    pid_z = PID(P=0.0003,I=-0.0000,D=0.0001)
+    pid_x = PID(P=0.0002,I=-0.0000,D=0.0003)
+    pid_y = PID(P=0.0002,I=-0.0000,D=0.0003)
+    pid_z = PID(P=0.0002,I=-0.0000,D=0.0003)
     pid_x.setPoint(goal_point[0])
     pid_y.setPoint(goal_point[1])
     pid_z.setPoint(goal_point[2])
@@ -108,6 +108,8 @@ class adjust_position():
         vel_raw[1] = self.pid_y.update(self.current_point[1])
         vel_raw[2] = self.pid_z.update(self.current_point[2])
         
+        if abs(self.pid_x.getError()) > self.precision[0] or abs(self.pid_y.getError()) > self.precision[1]:
+            vel_raw[2] = 0
         
         cos = np.cos(self.camera_angle)
         sin = np.sin(self.camera_angle)
@@ -118,6 +120,7 @@ class adjust_position():
         vel = np.dot(camera_tf,vel_raw)
         rospy.loginfo(vel)
         
+        
         if abs(self.pid_x.getError()) > self.precision[0] or abs(self.pid_y.getError()) > self.precision[1] or abs(self.pid_z.getError()) > self.precision[2]:
             self.bool_align = False
             self.count_aligned = 0
@@ -126,6 +129,7 @@ class adjust_position():
 
         if self.count_aligned > 3:
             rospy.loginfo("ALIGNED!!")
+            
             self.bool_align = True
             self.alginned.publish(True)
         

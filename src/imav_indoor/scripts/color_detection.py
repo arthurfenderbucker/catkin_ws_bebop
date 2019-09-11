@@ -1,44 +1,36 @@
 #!/usr/bin/env python
-import rospy
+from __future__ import print_function
 import cv2
 import numpy as np
-from sensor_msgs.msg import Image
 import rospkg
+from std_msgs.msg import Bool
 
-from cv_bridge import CvBridge, CvBridgeError
-
-
-
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
-from matplotlib import colors
-import matplotlib.pyplot as plt
+rospack = rospkg.RosPack()
 
 import json
 
-rospack = rospkg.RosPack()
-config_path = str(rospack.get_path('simulation')+'/config/color_config.json')
+config_path = str(rospack.get_path('imav_indoor')+'/config/color_config.json')
 
 
 class color_detection():
+    """ this node detects and localize an specific color range
+     on the image received from a certain topic"""
+
     colors = np.random.randint(0, 255, (10, 3))
     color_tracking = True
-    def __init__(self,color="blue"):
-        #get min and max HSV values from config file
-        self.color = color
-        with open(config_path) as json_data_file:
-            self.config_data = json.load(json_data_file)
-        print(self.config_data)
-        if color in self.config_data.keys():
-            print("existing color selected!")     
-        else:
-            print("new color selected!")
-            self.config_data[color] = {"min":{"H":0,"S":0,"V":0}, "max":{"H":255,"S":255,"V":255}}
 
-        self.min_values = self.config_data[color]["min"].values()
-        self.max_values = self.config_data[color]["max"].values()
-        self.calibrate()
-    
+    def __init__(self,color="blue"):
+
+        #get min and max HSV values from config file
+        with open(config_path) as json_data_file:
+            config_data = json.load(json_data_file)
+
+        self.min_values = config_data[color]["min"].values()
+        self.max_values = config_data[color]["max"].values() 
+
+        
+
+
     def crop_rect(self, img, rect):
         # get the parameter of the small rectangle
         center, size, angle = rect[0], rect[1], rect[2]
@@ -59,16 +51,16 @@ class color_detection():
     def nothing(self,x):
         pass
     def get_rect(self,image, show = True):
-        
+                
         frame_to_thresh = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) #convert to HSV
-        # cv2.imshow("Trackbars",self.color_range_image)
+        
         if self.min_values[0]<self.max_values[0]: #for colors close to red with hue value close to 0 and 180 
             thresh = cv2.inRange(frame_to_thresh,tuple(self.min_values), tuple(self.max_values))
         else:
-            thresh1 = cv2.inRange(frame_to_thresh,(0,self.min_values[1],self.min_values[2]), (self.min_values[0],self.max_values[1],self.max_values[2]))
-            thresh2 = cv2.inRange(frame_to_thresh,(self.max_values[0],self.min_values[1],self.min_values[2]), (255,self.max_values[1],self.max_values[2]))
+            thresh1 = cv2.inRange(frame_to_thresh,(0,self.min_values[1],self.min_values[2]), (self.max_values[0],self.max_values[1],self.max_values[2]))
+            thresh2 = cv2.inRange(frame_to_thresh,(self.min_values[0],self.min_values[1],self.min_values[2]), (180,self.max_values[1],self.max_values[2]))
+            
             thresh = cv2.bitwise_or(thresh1, thresh2)
-
         # ignore random noise and merge very close areas
         kernel = np.ones((5,5),np.uint8) 
         mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
@@ -124,54 +116,21 @@ class color_detection():
             cv2.imshow("Mask", mask)
         return [None, None, None]
 
-    def save_color(self):
-        with open(config_path, 'w') as json_data_file:
-            json.dump(self.config_data, json_data_file)
-        print("changes saved!")
-
-    def calibrate(self):
-        self.setup_trackbars()
-        # pass
-    def tracker_callback(self,x):
-        for k,j in enumerate("HSV"):
-            self.min_values[k] = cv2.getTrackbarPos("min_%s" % (j), "Trackbars")
-            self.config_data[self.color]["min"][j] = self.min_values[k]
-
-            self.max_values[k] = cv2.getTrackbarPos("max_%s" % (j), "Trackbars")
-            self.config_data[self.color]["max"][j] = self.max_values[k]
-        
-
-    def setup_trackbars(self):
-        cv2.namedWindow("Trackbars", 0)
-
-        for k,j in enumerate("HSV"):
-            cv2.createTrackbar("min_%s" % (j), "Trackbars", self.min_values[k], 255, self.tracker_callback)
-        for k,j in enumerate("HSV"):
-            cv2.createTrackbar("max_%s" % (j), "Trackbars", self.max_values[k], 255, self.tracker_callback)
+   
 
 def main():
-    print("please, write the color that you want to calibrate or the name of new one")
 
-    color_name = raw_input("color to calibrate (Enter): ")
-    c = color_detection(color=color_name)
-    img_topic = "/usb_cam/image_raw"#"/bebop/image_raw"#
-    bridge = CvBridge()
-    rospy.init_node('test_ros_image', anonymous=True)
-    
-    while not rospy.is_shutdown():
-        data = rospy.wait_for_message(img_topic, Image)
-        try:
-            cv_image = bridge.imgmsg_to_cv2(data, "bgr8")
-        except CvBridgeError as e:
-            print(e)
+    print("init")
+    c = color_detection()
+    # cap = cv2.VideoCapture(0)
+    # while 1:
+    #     ret, frame = cap.read()
+    #     if ret:
+    #         c.get_rect(frame)
+    #     k = cv2.waitKey(1)
+    #     if k == 27: break # esc pressed
 
-        (rows, cols, channels) = cv_image.shape
-        if not (cols > 60 and rows > 60):  # returns if data have unvalid shape
-            continue
-        c.get_rect(cv_image)
-        k = cv2.waitKey(5)
-        if k == 27 : break  #esc pressed
-        elif  k == ord("s"): c.save_color()
+
  
 if __name__ == '__main__':
     main()

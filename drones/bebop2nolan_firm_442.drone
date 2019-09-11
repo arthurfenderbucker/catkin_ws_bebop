@@ -9,6 +9,6 @@
     with_hd_battery="false"
     with_flir="false"
     flir_pos="tilted"/>
-  <pose>default</pose>
+  <pose>0 0 0.05 0 0 1.570796325</pose>
   <interface>eth1</interface>
 </drone>
