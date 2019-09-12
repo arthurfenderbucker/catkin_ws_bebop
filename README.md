@@ -20,9 +20,9 @@
 clone repo
 ```
 cd ~/
-git clone --recurse-submodules https://github.com/SkyRats/catkin_ws_bebop
+git clone --recurse-submodules https://github.com/buckerman/catkin_ws_bebop.git
 ```
-install sphinx:
+install parrot-sphinx:
 ```
 . ~/catkin_ws_bebop/install.sh
 ```
@@ -30,24 +30,23 @@ install sphinx:
 build catkin workspace
 ```
 cd ~/catkin_ws_bebop/
-git clone https://github.com/AutonomyLab/bebop_autonomy.git src/bebop_autonomy
 rosdep update
 rosdep install --from-paths src -i
 catkin build
 ```
->Note: if you want to use the opencv build from source instead of the one that comes with the ros, you canedit the CMakeList.txt file of the packages that require OpenCV (simulation and cvbridge) uncommenting the block of code:
+<!-- >Note: if you want to use the opencv build from source instead of the one that comes with the ros, you canedit the CMakeList.txt file of the packages that require OpenCV (simulation and cvbridge) uncommenting the block of code:
 > ```
 > #----------CUSTOM OPENCV--------- 
 > ...
 > #--------------------------------
 > ```
-> and than build the catkin workspace
-
+> and than build the catkin workspace -->
+<!-- 
 finally run these commands
 ```
 echo "source ~/catkin_ws_bebop/setup.sh" >> ~/.bashrc
 source ~/.bashrc
-```
+``` -->
 
 ----
 ## Run simulation
@@ -58,14 +57,13 @@ open a new terminal and run:
 . ~/catkin_ws_bebop/0_setup_simulation.sh
 ```
 it's expected to get "I firmwared_firmwares: done indexing firmwares" printed on the last line.
->Note: If firmwared is running correctly you should get "PONG" by running in another terminal:<br>
->```fdc ping```
+>Note: If firmwared is running correctly you should get "PONG" </br>
 
-in another terminal, start the simulated world by runnig:
+after that start the simulated world by runnig:
 ```
 . ~/catkin_ws_bebop/1_launch_simulation_world.sh
 ```
-and than launch the bebop driver to communicate with the drone
+and than in another terminal launch the bebop driver to communicate with the drone
 ```
 . ~/catkin_ws_bebop/2_launch_simulation_driver.sh
 ```
@@ -81,7 +79,7 @@ you shoud get some thing like:
 
 Great! now you are ready to simulate!
 
->Note: you can also use roslaunch instead of the 2_launch_simulation_driver.sh script4
+>Note: you can also use roslaunch instead of the 2_launch_simulation_driver.sh script
 >```
 >roslaunch simulation simulate.launch
 >```
@@ -97,7 +95,7 @@ Firstly make sure that none of the simulation scripts is runing.<br>
 Turn on the drone and connect to the drone's wifi<br>
 start bebops'driver by running:
 ```
-roslaunch simulation drone.launch
+roslaunch imav_indoor drone.launch
 ```
 <br>
 
