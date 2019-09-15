@@ -26,7 +26,7 @@ def main():
 
         # Add states to the container
         smach.StateMachine.add('takeoff', takeoff(),
-                               transitions={'done': 'land_now',
+                               transitions={'done': 'flag',
                                             'error': 'land_now'})
 
         smach.StateMachine.add('land_now', land_now(),
@@ -44,7 +44,7 @@ def main():
                                    transitions={'done': 'align_flag'})
 
         smach.StateMachine.add('flag', flag_subsm,
-                               transitions={'success': 'face_shelf',
+                               transitions={'success': 'land_now',
                                             'error': 'land_now'})
 
         smach.StateMachine.add('face_shelf', face_shelf(),
@@ -87,6 +87,9 @@ def main():
                                             'error': 'land_now'})
 
 
+
+        smach.StateMachine.add('drop_box', drop_box(),
+                               transitions={'done': 'land_now'})
 
 
         # smach.StateMachine.add('square', square(),
@@ -132,7 +135,7 @@ def main():
     outcome = sm.execute()
 
     # Wait for ctrl-c to stop the application
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(20)
 
     while not rospy.is_shutdown():
         rate.sleep()

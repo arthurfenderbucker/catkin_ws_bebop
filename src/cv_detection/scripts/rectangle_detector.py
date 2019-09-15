@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from sensor_msgs.msg import Image
 from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Point
+import time
 
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -14,9 +15,10 @@ bridge = CvBridge()
 class rectangle_detector(object):
     """docstring for detect_rectangle"""
 
+
     def __init__(self,image_topic="/usb_cam/image_raw", pub_topic="/cv_detection/rectangle_detector/detection"):
         super(rectangle_detector, self).__init__()
-        self.colors = np.random.randint(0, 255, (10, 3))
+        self.colors = np.random.randint(0, 255, (30, 3))
         rospy.init_node('rectangle_detector', anonymous=True)
         print("init")
         self.img_topic = rospy.get_param('~image_topic',image_topic)
@@ -30,6 +32,8 @@ class rectangle_detector(object):
         self.running_sub= rospy.Subscriber(
             "cv_detection/rectangle_detector/set_runnig_state", Bool, self.set_runninng_state, queue_size=None)
         self.ref_pub = rospy.Publisher(self.pub_topic, Point, queue_size=1)
+        self.count_fps = 0
+        self.t_0 = 0
 
     def set_image_topic(self, topic_name):
         self.img_topic = topic_name.data
@@ -50,29 +54,44 @@ class rectangle_detector(object):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         #------------- contours, area & perpendicular approach -----------------
-        for i in range(5):
-            gray = cv2.bilateralFilter(gray, 5, 3, 11)
-        # cv2.imshow("gray bi", gray)
+        for i in range(3):
+            gray = cv2.bilateralFilter(gray, 11, 5, 11)
+        cv2.imshow("gray bi", gray)
         edged = cv2.Canny(gray, 30, 200, apertureSize=5)
-        # cv2.imshow("edged", edged)
+        cv2.imshow("edged", edged)
 
         # find contours in the edged image, keep only the ones with the higher area
         im2, cnts, _ = cv2.findContours(edged.copy(),
                                         cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:10]
-
+        cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:30]
         poligons = self.filter_cnts(cnts)
-        rects = self.get_rect(poligons)
-        rects_center = self.get_rect_center(poligons)
-        radius = self.get_radius(poligons)
-
-        # rects = cv2.minAreaRect(cnts[0])
-        # print(rects)
-        if show: 
-            # image = self.show_rects(image, rects)
-            self.show_poligons(image, poligons)
         
-        return rects_center,radius
+        if len(poligons) >0:
+            # print("---")
+            # print(poligons[0])
+            ((x,y), radius) = cv2.minEnclosingCircle(poligons[0])
+            
+            if show and radius > 10:
+                # draw the circle and centroid on the frame,
+                # then update the list of tracked points
+                cv2.circle(image, (int(x), int(y)), int(radius),(0, 255, 255), 2)
+                cv2.circle(image, (int(x), int(y)), 3, (0, 0, 255), -1)
+                cv2.putText(image,"centroid", (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0, 0, 255),1)
+                # cv2.putText(image,"("+str(center[0])+","+str(center[1])+")", (center[0]+10,center[1]+15), cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0, 0, 255),1)
+
+            if show: 
+                # image = self.show_rects(image, rects)
+                self.show_poligons(image, poligons)
+            # rects = self.get_rect(poligons)
+            # rects_center = self.get_rect_center(poligons[0])
+            # radius = self.get_radius(poligons[0])
+            # print(rects_center, radius)
+            # rects = cv2.minAreaRect(cnts[0])
+            # print(rects)
+            # return None, None
+            return (x,y),radius
+        else:
+            return None, None
             
     def filter_cnts(self, cnts_raw):
         cnts = []
@@ -81,26 +100,26 @@ class rectangle_detector(object):
             # approximate the contour
             peri = cv2.arcLength(c, True)
             approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-
             # if our approximated contour has four points, then
             # we can assume that we have found our screen
-            if len(approx) >= 4 and len(approx) <= 4 and self.perpendicular(approx) < 30:# and cv2.contourArea(c)>30000:
-                cnts.append(approx)
-                print(approx)
+            if len(approx) >= 4 and len(approx) <= 4 and self.perpendicular(approx) < 30 and cv2.contourArea(c)>2000:
+                center, size, angle = cv2.minAreaRect(approx)
+                if angle < -75 or angle > -15:
+                    cnts.append(approx)
         
         return np.array(cnts)
 
     def get_radius(self,poligons):
         if len(poligons)>0:
-            return np.sqrt(np.power(poligons.max(axis=1)-poligons.min(axis=1),2))
+            return np.sqrt(np.sum(np.power(poligons.max(axis=0)-poligons.min(axis=0),2)))
         return None
     def get_rect(self,poligons):
         if len(poligons)>0:
-            return np.concatenate((poligons.min(axis=1),poligons.max(axis=1)),axis=1)
+            return cv2.minAreaRect(poligons)
         return None
     def get_rect_center(self, poligons):
         if len(poligons)>0:
-            return  np.mean([poligons.max(axis=1),poligons.min(axis=1)],axis = (0,1))
+            return  np.mean([poligons.max(axis=0),poligons.min(axis=0)],axis = (0,1))
         return None
         
     def show_poligons(self, image, poligons):
@@ -154,6 +173,7 @@ class rectangle_detector(object):
     def run(self):
         while not rospy.is_shutdown():
             if self.running:
+                
                 data = rospy.wait_for_message(self.img_topic, Image)
                 try:
                     cv_image = bridge.imgmsg_to_cv2(data, "bgr8")
@@ -163,20 +183,22 @@ class rectangle_detector(object):
                 (rows, cols, channels) = cv_image.shape
                 if not (cols > 60 and rows > 60):  # returns if data have unvalid shape
                     continue
+               
                 center, radius = self.update(cv_image)
-                # # print(radius)
+                # print("fps: " +str(1/(time.time() - self.t_0)))
+                # self.t_0 = time.time()
+                # print("radius: "+str(radius))
                 if not center is None:
                     
                     # img_crop, img_rot = self.crop_rect(cv_image,rect)
                     p = Point()
-                    p.x = center[0][0]
-                    p.y = center[0][1]
+                    (p.x, p.y) = center
                     p.z = radius
-                    # print(radius)
-                    if radius[0][0][0] > 30: 
+                    # print(p)
+                    if radius > 30: 
                         self.ref_pub.publish(p)  
             k = cv2.waitKey(1)
-            if k == 27 : break  #esc pressed
+            # if k == 27 : break  #esc pressed
 
 
 if __name__ == "__main__":
@@ -185,7 +207,7 @@ if __name__ == "__main__":
     d.run()
 
     cv2.destroyAllWindows()
-    cap.release()
+    # cap.release()
 
 
 # --------- corners approach --------------

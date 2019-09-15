@@ -1,14 +1,22 @@
 <?xml version="1.0"?>
 <launch>
-<!-- <node name="Controle" pkg="dronecontrol" type="controle.py" launch-prefix="xterm -e" /> -->
-<node name="State_machine" pkg="imav_indoor" type="sm.py" />
-<node name="rectangle_detector" pkg="cv_detection" type="rectangle_detector.py">
-    <param name="running" type="bool" value="false"/>
-</node>
-<node name="color_range" pkg="cv_detection" type="color_range.py">
-    <param name="running" type="bool" value="false"/>
-</node>
-<!-- <include file="$(find imav_indoor)/launch/nodes.xml"/> -->
+   
+    <node name="State_machine" pkg="imav_indoor" type="sm.py" required="true" output="screen"/>
+
+    <node pkg="cv_detection" name="rectangle_detection" type="rectangle_detector.py" output="screen">
+        <param name="image_topic" type="string" value="/bebop/image_raw" />
+        <param name="pub_topic" type="string" value="/control/align_reference/ref_point" />
+        <param name="running" type="bool" value="false"/>
+    </node>
+    <node pkg="cv_detection" name="color_range" type="color_range.py" output="screen">
+        <param name="image_topic" type="string" value="/bebop/image_raw" />
+        <param name="color" type="string" value="green" />
+        <param name="pub_topic" type="string" value="/control/align_reference/ref_point" />
+        <param name="running" type="bool" value="false" />
+        <param name="min_radius" type="int" value="20" />
+    </node>
+     <!-- <node name="align_reference" pkg="dronecontrol" type="align_reference.py" launch-prefix="gnome-terminal -e "/> -->
+    <!-- <include file="$(find imav_indoor)/launch/nodes.xml"/> -->
 </launch>
 <!--  -->
 

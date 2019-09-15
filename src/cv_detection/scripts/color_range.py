@@ -3,7 +3,7 @@ import rospy
 import cv2
 import numpy as np
 from sensor_msgs.msg import Image
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String, Bool, Int16
 
 from geometry_msgs.msg import Point
 import rospkg
@@ -20,10 +20,11 @@ class color_range():
     colors = np.random.randint(0, 255, (10, 3))
     color_tracking = True
     
+    
     min_values = [0,0,0]
     max_values = [255,255,255]
 
-    def __init__(self,color="blue", image_topic="/usb_cam/image_raw", pub_topic="/cv_detection/color_range/detection"):
+    def __init__(self,color="green", image_topic="/usb_cam/image_raw", pub_topic="/cv_detection/color_range/detection"):
         #get min and max HSV values from config file
 
 
@@ -38,6 +39,7 @@ class color_range():
         self.pub_topic = rospy.get_param('~pub_topic',pub_topic)
         self.calibrating = rospy.get_param('~calibrate',False)
         self.running = rospy.get_param('~running',True)
+        self.min_radius = rospy.get_param('~min_radius',20)
 
         print("saved colors: ")
         for k in  self.config_data.keys():
@@ -64,6 +66,8 @@ class color_range():
             "cv_detection/color_range/set_runnig_state", Bool, self.set_runninng_state, queue_size=None)
         self.color_sub = rospy.Subscriber(
             "cv_detection/color_range/set_color", String, self.set_color, queue_size=None)
+        self.min_radius_sub = rospy.Subscriber(
+            "cv_detection/color_range/set_min_radius", Int16, self.set_min_radius, queue_size=None)
 
         self.ref_pub = rospy.Publisher(self.pub_topic, Point, queue_size=1)
     
@@ -77,6 +81,11 @@ class color_range():
 
     def set_runninng_state(self,boolean_state):
         self.running = boolean_state.data
+        if not self.running:
+            cv2.destroyAllWindows()
+ 
+    def set_min_radius(self, data):
+        self.min_radius = data.data
 
     def set_color(self,color):
 
@@ -160,8 +169,8 @@ class color_range():
             img_crop, img_rot = self.crop_rect(image, rect)
             
             # print(rect)  
-            if show:
-                cv2.imshow("rect",img_crop)
+            # if show:
+            #     cv2.imshow("rect",img_crop)
             # print(rect)
             box = cv2.boxPoints(rect)
             box = np.int0(box)
@@ -183,12 +192,12 @@ class color_range():
             if show :
                 cv2.imshow("Original", image)
                 cv2.imshow("Thresh", thresh)
-                cv2.imshow("Mask", mask)
+                # cv2.imshow("Mask", mask)
             return [center,radius,rect]
         if show :
             cv2.imshow("Original", image)
             cv2.imshow("Thresh", thresh)
-            cv2.imshow("Mask", mask)
+            # cv2.imshow("Mask", mask)
         return [None, None, None]
 
     def save_color(self):
@@ -250,10 +259,11 @@ class color_range():
                     p.x = center[0]
                     p.y = center[1]
                     p.z = radius
-                    # print(radius)
-                    if radius > 30: 
-                        self.ref_pub.publish(p)  
-            k = cv2.waitKey(1)
+                    print(radius)
+                    if radius > self.min_radius: 
+                        self.ref_pub.publish(p)
+
+            k = cv2.waitKey(5)
             if k == 27 : break  #esc pressed
             elif rospy.get_param('~calibrate',False) and k == ord("s") : self.save_color()
 
@@ -265,7 +275,6 @@ def main():
     c.run()
 
     cv2.destroyAllWindows()
-    cap.release()
  
 if __name__ == '__main__':
     main()
