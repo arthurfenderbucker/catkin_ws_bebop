@@ -12,7 +12,7 @@ class adjust_position():
     bool_align = False
     last_ref_point_time = 0
     
-    goal_point = np.append( image_shape.copy() / 2, 120) # center of the image as default
+    goal_point = np.append( image_shape.copy() / 2, 135) # center of the image as default
     current_point = goal_point.copy() 
     precision = np.array([40,40,5]) # pixels
 
@@ -46,15 +46,15 @@ class adjust_position():
 
     # pid_x = PID(P=0.0018,I=0.000004,D=1.4)
 
-    pid_x = PID(P=0.0004,I=0.000001,D=0.002)
+    pid_x = PID(P=0.0003,I=0.000001,D=0.02)
     pid_y = PID(P=0.004, I=0.00001,D=0.02)
-    pid_z = PID(P=0.0003,I=0.00000,D=0.0002)
+    pid_z = PID(P=0.0004,I=0.000001,D=0.004)
 
     pid_x.setPoint(goal_point[0])
     pid_y.setPoint(goal_point[1])
     pid_z.setPoint(goal_point[2])
     
-    target_radium_real_size = 0.4
+    target_radium_real_size = 0.23
     f = 320 #equivalent focal length
 
     def __init__(self):
@@ -148,7 +148,7 @@ class adjust_position():
         print(d)
         return d
     def calculate_vel(self):
-        # d = self.get_distance()
+        print(self.get_distance())
         # for i,k in enumerate(self.pid_x_calibration_data_dist):
         #     if d < k:
         #         self.pid_x.setKp(self.pid_x_calibration_data_p[i])

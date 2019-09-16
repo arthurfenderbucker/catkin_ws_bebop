@@ -44,7 +44,7 @@ def main():
                                    transitions={'done': 'align_flag'})
 
         smach.StateMachine.add('flag', flag_subsm,
-                               transitions={'success': 'land_now',
+                               transitions={'success': 'drop_box',
                                             'error': 'land_now'})
 
         smach.StateMachine.add('face_shelf', face_shelf(),
@@ -89,7 +89,7 @@ def main():
 
 
         smach.StateMachine.add('drop_box', drop_box(),
-                               transitions={'done': 'land_now'})
+                               transitions={'done': 'flag'})
 
 
         # smach.StateMachine.add('square', square(),

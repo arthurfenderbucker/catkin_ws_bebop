@@ -102,12 +102,11 @@ class vso_controler(object): # visual odometry drone controler
     def odometry_callback(self, odom):
         # rospy.loginfo("odom: ")
         self.angle_pose = odom.pose.pose.orientation.z
-        if rospy.get_time() - self.last_vso_time > 0.5:
+        if rospy.get_time() - self.last_vso_time > 0.2:
             self.trust_vso = 0
-            
         if not self.trust_vso:
             rospy.loginfo("NO FEATURES!!! using bebop odom")
-        self.current_pose = ros_numpy.numpify(odom.pose.pose)[:3,3] - self.offset_pose_odom
+        self.current_pose = ros_numpy.numpify(odom.pose.pose)[:3,3] - self.offset_pose - self.offset_pose_odom
         self.calculate_vel()
 
 

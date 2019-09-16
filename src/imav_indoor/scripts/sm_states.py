@@ -9,7 +9,7 @@ import os
 import rospy
 import smach
 import smach_ros
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String, Bool, UInt8
 
 pub_state = rospy.Publisher("/state_machine/state",
                             String, queue_size=1)
@@ -97,12 +97,12 @@ class align_flag(smach.State):
         p = Point()
         p.x = 856/2
         p.y = 480/2
-        p.z = 150
+        p.z = 135
         self.goal_point_pub.publish(p)
         print("ok")
 
 
-        rospy.wait_for_message("/bebop/land", Empty)
+        rospy.wait_for_message("/control/align_reference/aligned", Bool)
         # rospy.sleep(1)
         # print(done)
         self.running_pub.publish(False)
@@ -268,6 +268,8 @@ class drop_box(smach.State):
 
         self.move_topic = rospy.Publisher(
             "/bebop/cmd_vel", Twist, queue_size=1)
+        self.flip_pub = rospy.Publisher(
+            "/bebop/flip", UInt8, queue_size=1)
 
     def control(self, x, y, z, t):
         twist = Twist()
@@ -284,10 +286,12 @@ class drop_box(smach.State):
 
     def execute(self, userdata):
         rospy.loginfo('drop_box')
-        self.control(0, 0, -1, 0.3)
-        self.control(-0, 0, 100,1)
-        self.control(-1, 0, 0,0.3)
-        rospy.sleep(2)
+        self.flip_pub.publish(1)
+        # self.control(0, 0, -1, 0.3)
+        # self.control(-0, 0, 100,1)
+        # self.control(-1, 0, 0,0.3)
+
+        rospy.sleep(1)
         return 'done'
 
 

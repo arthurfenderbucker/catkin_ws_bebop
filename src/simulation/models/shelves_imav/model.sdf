@@ -18,7 +18,7 @@
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
-        <!--<material>
+        <!-- <material>
           <script>
             <uri>model://shelves_2/materials/scripts</uri>
             <uri>model://shelves_2/materials/textures</uri>
@@ -27,8 +27,28 @@
           <shader type="normal_map_object_space">
             <normal_map>Shelves_2_Normal.png</normal_map>
           </shader>
-        </material>-->
+        </material> -->
       </visual>
+
+
+      <!-- put visuals here -->
+      <visual name="visual_qr">
+        <pose>0 0.026 1 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.8 0.005 0.6</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://shelves_imav/materials/scripts</uri>
+            <uri>model://shelves_imav/materials/textures</uri>
+            <name>QR_code/qr1</name>
+          </script>
+        </material>
+      </visual>
+      <!-- put visuals above -->
+
     </link>
   </model>
 </sdf>

@@ -15,6 +15,7 @@
         <param name="running" type="bool" value="false" />
         <param name="min_radius" type="int" value="20" />
     </node>
+    <node name="Kill_button" pkg="imav_indoor" type="kill_button.py" required="true" output="screen"/>
      <!-- <node name="align_reference" pkg="dronecontrol" type="align_reference.py" launch-prefix="gnome-terminal -e "/> -->
     <!-- <include file="$(find imav_indoor)/launch/nodes.xml"/> -->
 </launch>

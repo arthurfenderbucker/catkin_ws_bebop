@@ -54,7 +54,7 @@ class rectangle_detector(object):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         #------------- contours, area & perpendicular approach -----------------
-        for i in range(5):
+        for i in range(3):
             gray = cv2.bilateralFilter(gray, 11, 3, 7)
         cv2.imshow("gray bi", gray)
         edged = cv2.Canny(gray, 30, 200, apertureSize=5)
