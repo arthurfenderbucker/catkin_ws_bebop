@@ -1,0 +1,1 @@
+rostopic pub --once /bebop/reset std_msgs/Empty "{}"
