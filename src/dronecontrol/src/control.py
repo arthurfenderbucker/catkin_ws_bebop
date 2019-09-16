@@ -58,6 +58,7 @@ class vso_controler(object): # visual odometry drone controler
         rospy.Subscriber('/bebop/odom/', Odometry, self.odometry_callback)
         rospy.Subscriber('/bebop/land', Empty, self.land)
         rospy.Subscriber('/bebop/takeoff', Empty, self.takeoff)
+        
 
         rospy.Subscriber('/control/position', Point, self.position_callback)
         rospy.Subscriber('/control/position_relative', Point, self.position_relative_callback)
@@ -65,13 +66,13 @@ class vso_controler(object): # visual odometry drone controler
         rospy.Subscriber('/control/rotation', Float64, self.rotation_callback)
         # rospy.Subscriber('/control/land', Empty, self.land)
 
-        #turn on and of the viual odometry based control
-        # rospy.Service('/control/set_vso', SetBool, self.set_vso_handle)
         rospy.Service('/control/reset_vso_coords', Trigger , self.reset_vso_position_service)
 
         self.running_sub = rospy.Subscriber(
-            "cv_detection/rectangle_detector/set_runnig_state", Bool, self.set_runninng_state, queue_size=None)
+            "control/set_runnig_state", Bool, self.set_runninng_state, queue_size=1)
 
+        self.current_pose_pub = rospy.Publisher(
+            "control/current_position", Point, queue_size=1)
         #dynamic parameters serve
         srv = Server(ControlConfig, self.parameters_callback)
         
@@ -219,6 +220,12 @@ class vso_controler(object): # visual odometry drone controler
                 #     adjusted_vel.linear.x = self.setted_vel[2]
 
                 self.setpoint_velocity_pub.publish(adjusted_vel)
+
+                p = Point()
+                p.x = self.current_pose[0]
+                p.y = self.current_pose[1]
+                p.z = self.current_pose[2]
+                self.current_pose_pub.publish(p)
                 
             self.rate.sleep()
 

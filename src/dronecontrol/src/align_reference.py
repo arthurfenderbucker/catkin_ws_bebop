@@ -31,20 +31,6 @@ class adjust_position():
     trust_factor = 0.5
 
     pid_x_calibration_data_dist = [ 3 ,4, 5  ,30] # [ 2.16 ,3.52,4.36,30]
-    # (A,B) = np.polyfit(pid_x_calibration_data_p, pid_x_calibration_data_dist, 1)
-    # print
-    
-
-    # #40 dist 3m 255
-    # pid_x = PID(P=0.0014,I=0.00002,D=0.35)
-
-    #40 dist 2m 241
-    pid_x = PID(P=0.0018,I=0.00002,D=0.7)
-
-    # 40cm dist 1m 210
-    pid_x = PID(P=0.0018,I=0.000004,D=1.4)
-
-    # pid_x = PID(P=0.0018,I=0.000004,D=1.4)
 
     pid_x = PID(P=0.0003,I=0.000001,D=0.02)
     pid_y = PID(P=0.004, I=0.00001,D=0.02)
