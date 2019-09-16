@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-<node name="Controle" pkg="dronecontrol" type="controle.py" launch-prefix="xterm -e" />
-<include file="$(find simulation)/launch/nodes.xml"/>
-</launch>
-<!--  -->
-

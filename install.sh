@@ -9,10 +9,9 @@ sudo apt-get install mesa-utils
 
 sudo apt-get install parrot-sphinx
 
-cp bebop2_pfe.drone /opt/parrot-sphinx/usr/share/sphinx/drones/
-
-cp bebop2nolan.drone /opt/parrot-sphinx/usr/share/sphinx/drones/
-
 
 echo "source ~/catkin_ws_bebop/setup.sh" >> ~/.bashrc
+echo "export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$HOME/catkin_ws_bebop/src/simulation/models" >> ~/.bashrc
+echo "export GAZEBO_PLUGIN_PATH=$HOME/catkin_ws_bebop/devel${GAZEBO_PLUGIN_PATH:+:$$}" >> ~/.bashrc
+
 source ~/.bashrc

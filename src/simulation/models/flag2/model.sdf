@@ -1,0 +1,69 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="flag2">
+    <pose>0 0 0.625  0 0 0</pose>
+    <static>true</static>
+    <link name="link">
+      <inertial>
+        <mass>40.0</mass>
+        <inertia>
+          <ixx>1</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1</iyy>
+          <iyz>0</iyz>
+          <izz>1</izz>
+        </inertia>
+      </inertial>
+
+      <collision name="collision">
+        <geometry>
+          <box>
+              <size>0.9 0.05 0.7</size>
+          </box>
+        </geometry>
+	      <surface>
+          <contact>
+            <ode>
+              <max_vel>0.1</max_vel>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <!-- <mesh>
+            <uri>model://flag2/meshes/big_box.dae</uri>
+          </mesh> -->
+          <box>
+              <size>0.9 0.05 0.7</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name>
+          </script>
+        </material>
+      </visual>
+      <visual name="visual_qr">
+      <pose>0 0.026 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.8 0.005 0.6</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://flag2/materials/scripts</uri>
+            <uri>model://flag2/materials/textures</uri>
+            <name>Flag/spain</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+
+  </model>
+</sdf>

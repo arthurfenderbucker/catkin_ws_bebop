@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-	<node name="Controle" pkg="dronecontrol" type="controle.py" launch-prefix="xter$
+	<!-- <node name="Controle" pkg="dronecontrol" type="controle.py" launch-prefix="xter$ -->
 	<include file="$(find simulation)/launch/drone.launch">
 		<arg name="ip" value="10.202.0.1"/>
 	</include>
 	
-	<include file="$(find simulation)/launch/nodes.xml"/>
+	<!-- <include file="$(find simulation)/launch/nodes.xml"/> -->
 </launch>
