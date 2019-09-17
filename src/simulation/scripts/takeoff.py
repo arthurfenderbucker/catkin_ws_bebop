@@ -4,7 +4,7 @@ from bebop_msgs.msg import Ardrone3PilotingStateAltitudeChanged
 # from geometry_msgs.msg import PoseStamped
 # from sensor_msgs.msg import Imu
 from std_msgs.msg import String
-from dronecontrol.msg import Vector3D
+from drone_control.msg import Vector3D
 
 
 class takeoff:

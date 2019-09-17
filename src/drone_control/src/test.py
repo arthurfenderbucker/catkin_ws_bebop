@@ -4,7 +4,7 @@ import yaml
 import rospkg
 
 rospack = rospkg.RosPack()
-print(rospack.get_path('dronecontrol')+'/config/bebop2_config.yaml')
+print(rospack.get_path('drone_control')+'/config/bebop2_config.yaml')
 # load the yaml file
 # document = open('../config/bebop2_config.yaml', 'r')
 # and finally parse the file

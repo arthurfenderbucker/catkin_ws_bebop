@@ -3,7 +3,7 @@
 import rospy
 
 from dynamic_reconfigure.server import Server
-from dronecontrol.cfg import ControlConfig
+from drone_control.cfg import ControlConfig
 
 def callback(config, level):
     rospy.loginfo("""Reconfigure Request:

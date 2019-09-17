@@ -11,7 +11,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 
 import time
-from dronecontrol.msg import Vector3D
+from drone_control.msg import Vector3D
 from optical_flow import CameraStabilization as camStab
 
 import PIL

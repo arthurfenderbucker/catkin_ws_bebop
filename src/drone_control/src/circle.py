@@ -7,7 +7,7 @@ import math
 from geometry_msgs.msg import Twist
 # from mavros_msgs import srv
 # from mavros_msgs.msg import State
-from dronecontrol.msg import Vector3D
+from drone_control.msg import Vector3D
 import time
 #=================Parameter Initializaiton========================,
 set_velocity = Twist()

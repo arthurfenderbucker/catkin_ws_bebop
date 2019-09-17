@@ -13,7 +13,7 @@ import ros_numpy
 from PID import PID
 
 from dynamic_reconfigure.server import Server
-from dronecontrol.cfg import ControlConfig
+from drone_control.cfg import ControlConfig
 
 import time
 

@@ -12,7 +12,7 @@ import time
 
 ###  VERIFICAR COMO IMPORTAR A MENSAGEM DO PACKAGE ###
 
-from dronecontrol.msg import Vector3D
+from drone_control.msg import Vector3D
 
 
 def publicaVelocity(steps):  # list of x,y,z positions

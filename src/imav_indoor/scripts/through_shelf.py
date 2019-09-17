@@ -11,7 +11,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import time
-from dronecontrol.msg import Vector3D
+from drone_control.msg import Vector3D
 
 bridge = CvBridge()
 cap = cv2.VideoCapture(0)

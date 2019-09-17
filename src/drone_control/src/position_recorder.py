@@ -8,7 +8,7 @@ import rospkg
 
 
 rospack = rospkg.RosPack()
-positions_path = str(rospack.get_path('dronecontrol')+'/config/recorded_routines.json')
+positions_path = str(rospack.get_path('drone_control')+'/config/recorded_routines.json')
 
 
 with open(positions_path, 'r') as json_data_file:
