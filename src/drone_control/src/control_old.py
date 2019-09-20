@@ -22,16 +22,21 @@ class vso_controler(object): # visual odometry drone controler
     
     goal_pose = np.array([0.0,0.0,1.0])
     current_pose = np.array([0.0,0.0,1.0])
-    positioning_vel = np.array([0.0,0.0,1.0])
+    offset_pose_odom = np.array([0.0,0.0,0.0])
+    offset_pose = np.array([0.0,0.0,0.0])
+    positioning_vel = np.array([0.0,0.0,0.0])
     angle_pose = 0.0
+    scale_factor = 1.0
+    pid_x = PID(P=rospy.get_param('P_x', '2.0'),I=rospy.get_param('I_x', '0.0'),D=rospy.get_param('D_x', '0.0'))
+    pid_y = PID(P=rospy.get_param('P_y', '2.0'),I=rospy.get_param('I_y', '0.0'),D=rospy.get_param('D_y', '0.0'))
+    pid_z = PID(P=rospy.get_param('P_z', '2.0'),I=rospy.get_param('I_z', '0.0'),D=rospy.get_param('D_z', '0.0'))
 
-    pid_x = PID(P=0.0,I=0.0,D=0.0)
-    pid_y = PID(P=0.0,I=0.0,D=0.0)
-    pid_z = PID(P=0.0,I=0.0,D=0.0)
 
     camera_angle = Twist()
     setted_vel = Twist()
+    
 
+    vso_on = False            # visual odometry based control status
     control_mode = "position" # position or velocity  
     trust_vso = 0
     last_vso_time = 0 
@@ -49,14 +54,14 @@ class vso_controler(object): # visual odometry drone controler
         self.running = rospy.get_param('~running',True)
         self.vso_on = rospy.get_param('~vso_on',True)
         self.config_file = rospy.get_param('~config_file',"default.json")
-        calibrate_pid = rospy.get_param('~calibrate_pid',False)
+        
+        rospy.Subscriber('/orb_slam2_mono/pose', PoseStamped, self.vso_position_callback)
 
+        rospy.Subscriber('/bebop/states/ardrone3/PilotingState/AltitudeChanged', Ardrone3PilotingStateAltitudeChanged, self.altitude_callback)
+        rospy.Subscriber('/bebop/odom/', Odometry, self.odometry_callback)
         rospy.Subscriber('/bebop/land', Empty, self.land)
         rospy.Subscriber('/bebop/takeoff', Empty, self.takeoff)
         
-        rospy.Subscriber('/odom_slam_sf/current_coord', Point, self.position_callback)
-
-        rospy.Subscriber('/bebop/odom/', Odometry, self.odometry_callback)
 
         rospy.Subscriber('/control/position', Point, self.position_callback)
         rospy.Subscriber('/control/position_relative', Point, self.position_relative_callback)
@@ -65,7 +70,6 @@ class vso_controler(object): # visual odometry drone controler
         # rospy.Subscriber('/control/land', Empty, self.land)
 
         rospy.Service('/control/reset_vso_coords', Trigger , self.reset_vso_position_service)
-        rospy.Service('/control/calibrate_pid', SetBool, self.set_calibrate_pid)
 
         self.running_sub = rospy.Subscriber(
             "control/set_runnig_state", Bool, self.set_runninng_state, queue_size=1)
@@ -73,12 +77,11 @@ class vso_controler(object): # visual odometry drone controler
         self.current_pose_pub = rospy.Publisher(
             "control/current_position", Point, queue_size=1)
         #dynamic parameters serve
-        if calibrate_pid:
-            srv = Server(ControlConfig, self.parameters_callback)
+        srv = Server(ControlConfig, self.parameters_callback)
         
-        t = time.time()
+        t = rospy.time()
         rospy.loginfo("aligning camera")
-        while time.time() - t < 3:
+        while rospy.time() - t < 3:
             self.align_camera()
         rospy.loginfo("setup ok")
         self.goal_pose = self.current_pose
@@ -93,47 +96,79 @@ class vso_controler(object): # visual odometry drone controler
 
     def takeoff(self,callback_data):
         self.align_camera()
-        
+        # reset_vso_position()
+        # self.vso_on = True
+    def rotation_callback(self):
+        pass
+    def altitude_callback(self,altitude):
+        # rospy.loginfo("altitude: ")
+        # rospy.loginfo(altitude.altitude)
+        pass
+    def odometry_callback(self, odom):
+        # rospy.loginfo("odom: ")
+        self.angle_pose = odom.pose.pose.orientation.z
+        if rospy.get_time() - self.last_vso_time > 0.2:
+            self.trust_vso = 0
+        if not self.trust_vso:
+            rospy.loginfo("NO FEATURES!!! using bebop odom")
+        self.current_pose = ros_numpy.numpify(odom.pose.pose)[:3,3] - self.offset_pose - self.offset_pose_odom
+        self.calculate_vel()
+
+
     def position_callback(self, goal_point):
         self.goal_pose = ros_numpy.numpify(goal_point)
         self.pid_setpoint(self.goal_pose)
         self.control_mode = "position"
 
-    def position_relative_callback(self, goal_point): #
+    def position_relative_callback(self, goal_point):
         self.goal_pose += ros_numpy.numpify(goal_point)
         self.pid_setpoint(self.goal_pose)
-        self.control_mode = "position"
+        self.control_mode = "position"     
 
-    def current_coord_callback(self, current_coord):
-        self.current_pose = ros_numpy.numpify(current_coord)
-        self.calculate_vel()
-        
-
-
-    def velocity_callback(self, goal_vec): #Point
+    def velocity_callback(self, goal_vec):
         self.setted_vel = ros_numpy.numpify(goal_vec)
 
         self.control_mode = "velocity"
         rospy.loginfo("got velocity goal")
+        # rospy.loginfo("VELOCITY: x: " + str(goal_vec.x) + " y: " +
+        #             str(goal_vec.y) + " z: " + str(goal_vec.z))
+
+    def vso_position_callback(self,pose):
+        self.trust_vso = 1
+        self.last_vso_time = rospy.get_time()
+
+        vso_pose = ros_numpy.numpify(pose)[:3,3]
+        self.offset_pose_odom = self.current_pose - (vso_pose - self.offset_pose)
+        self.current_pose[0] = self.scale_factor * vso_pose
+        rospy.loginfo("POSE: x: " + str(self.current_pose))
+        self.calculate_vel()
+
+        
+        # print(self.positioning_vel)
 
     def parameters_callback(self, config, level):
+        rospy.loginfo("""Reconfigure Request: \n P_x {P_x} I_x {I_x} D_x {D_x} \n P_y {P_y} I_y {I_y} D_y {D_y} \n P_z {P_z} I_z {I_z} D_z {D_z} \n scale_factor {scale_factor} \n off_x {offset_pose_x} off_y {offset_pose_y} off_z {offset_pose_z} \n vso_on {vso_on}""".format(**config))
+        if hasattr(self, 'pid_x'):
+            self.pid_x.set_PID_constants(config.P_x,config.I_x,config.D_x)
+            self.pid_y.set_PID_constants(config.P_y,config.I_y,config.D_y)
+            self.pid_z.set_PID_constants(config.P_z,config.I_z,config.D_z)
+        else:
+            self.pid_x = PID(P=config.P_x,I=config.I_x,D=config.D_x)
+            self.pid_y = PID(P=config.P_y,I=config.I_y,D=config.D_y)
+            self.pid_z = PID(P=config.P_z,I=config.I_z,D=config.D_z)
 
-        rospy.loginfo("""Reconfigure Request: \n P_x {P_x} I_x {I_x} D_x {D_x} \n P_y {P_y} I_y {I_y} D_y {D_y} \n P_z {P_z} I_z {I_z} D_z {D_z} \n
-                                        \n mult_P_x {mult_P_x} mult_I_x {mult_I_x} mult_D_x {mult_D_x} \n mult_P_y {mult_P_y} mult_I_y {mult_I_y} mult_D_y {mult_D_y} \n mult_P_z {mult_P_z} mult_I_z {mult_I_z} mult_D_z {mult_D_z}mult_x 10^{mult_P_x}""".format(**config))
-
-        # if hasattr(self, 'pid_x'):
-        self.pid_x.set_PID_constants(config.P_x*10**config.mult_P_x, config.I_x*10**config.mult_I_x, config.D_x*10**config.mult_D_x)
-        self.pid_y.set_PID_constants(config.P_y*10**config.mult_P_y, config.I_y*10**config.mult_I_y, config.D_y*10**config.mult_D_y)
-        self.pid_z.set_PID_constants(config.P_z*10**config.mult_P_z, config.I_z*10**config.mult_I_z, config.D_z*10**config.mult_D_z)
-        
+        self.scale_factor = config.scale_factor
+        self.vso_on = config.vso_on
+        self.offset_pose[0] = config.offset_pose_x
+        self.offset_pose[1] = config.offset_pose_y
+        self.offset_pose[2] = config.offset_pose_z
         return config
 
     # ------- service handles ----------
-    def set_calibrate_pid(self, request):
-        assert isinstance(request, SetBoolRequest)
-        self.calibrate_pid = request.data
-        srv = Server(ControlConfig, self.parameters_callback)
-        return SetBoolResponse(True, "calibrate_pid is now : "+str(self.calibrate_pid))
+    # def set_vso_handle(self, request):
+    #     assert isinstance(request, SetBoolRequest)
+    #     self.vso_on = request.data
+    #     return SetBoolResponse(True, "New vso running status is: {}".format(""))
 
     def reset_vso_position_service(self, request):
         assert isinstance(request, TriggerRequest)
@@ -162,7 +197,6 @@ class vso_controler(object): # visual odometry drone controler
 
     def calculate_vel(self):
         self.positioning_vel = self.pid_update(self.current_pose)
-
 
         rospy.loginfo("VELOCITY: x: " + str(self.positioning_vel[0]) + " y: " + str(self.positioning_vel[1]) + " z: " + str(self.positioning_vel[2]))
     

@@ -15,7 +15,6 @@ with open(positions_path, 'r') as json_data_file:
     try:
         positions_data = json.load(json_data_file)
     except:
-
         positions_data = {}
 
 decision = 0

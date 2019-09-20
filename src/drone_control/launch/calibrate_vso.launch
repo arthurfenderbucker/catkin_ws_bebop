@@ -1,6 +1,7 @@
 <launch> 
   <arg name="map" default="true"/>
   <arg name="map_file" default="quarto2.bin"/>
+  <arg name="config_file" default="default.json"/>
   <node name="control" pkg="drone_control"
       type="control.py" output="screen">
        
@@ -8,17 +9,6 @@
        <!-- <param name="X" value="/P_x,std_msgs/Float64,publishedTopic" /> -->
        <!-- <param name="settings_file" type="string" value="$(drone_control)/config/bebop2_config.yaml" /> -->
   </node>
-  <node name="left_wheel_pid" pkg="pid" type="controller" >
-    <param name="Kp" value="5.0" />
-    <param name="Ki" value="0.0" />
-    <param name="Kd" value="0.1" />
-    <param name="upper_limit" value="10" />
-    <param name="lower_limit" value="-10" />
-    <param name="windup_limit" value="10" />
-    <param name="max_loop_frequency" value="100.0" />
-    <param name="min_loop_frequency" value="100.0" />
-  </node>
-
   <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" output="screen">
   </node>
   <include file="$(find orb_slam2_ros)/ros/launch/orb_slam2_bebop2.launch">

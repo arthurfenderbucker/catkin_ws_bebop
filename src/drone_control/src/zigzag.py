@@ -20,11 +20,12 @@ def main():
     rate =rospy.Rate(0.125)
     while not rospy.is_shutdown():
         
-        rospy.loginfo("[0,-2,0]")
-        pub.publish(array_to_vec([0,-2,0]))
+        rospy.loginfo("[0,0,1]")
+        pub.publish(array_to_vec([0,0,1]))
+
         t = raw_input()
-        rospy.loginfo("[0,2,0]")
-        pub.publish(array_to_vec([0,2,0]))
+        rospy.loginfo("[0,0,-1]")
+        pub.publish(array_to_vec([0,0,-1])
         t = raw_input()
         # rate.sleep()
 
