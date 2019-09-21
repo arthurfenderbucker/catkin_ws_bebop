@@ -64,34 +64,18 @@ class odom_slam_sf(object): # visual odometry drone controler
         self.current_coord_pub = rospy.Publisher(
             "odom_slam_sf/current_coord", Point, queue_size=1)
 
-        # self.current_coord_pub = rospy.Publisher(
-        #     "odom_slam_sf/current_position", Point, queue_size=1)
+        self.current_pose_pub = rospy.Publisher(
+            "odom_slam_sf/current_position", Pose, queue_size=1)
 
         rospy.loginfo("setup ok")
 
     # ------------ topics callbacks -----------
     def odometry_callback(self, odom):
 
-        # self.angle_pose = odom.pose.pose.orientation.z
-
-        # if rospy.get_time() - self.last_vso_time > 0.2:
-        #     self.trust_vso = 0
-        # if not self.trust_vso:
-        #     rospy.loginfo("NO FEATURES!!! using bebop odom")
-
         print(ros_numpy.numpify(odom.pose.pose))
         self.odom_pose_raw = ros_numpy.numpify(odom.pose.pose)
         
-        # odom_coord_raw = ros_numpy.numpify(odom.pose.pose)[:3,3]
-
-        
-        # odom_coord_raw = np.hstack((odom_coord_raw,[1]))
-        # self.odom_coord = np.dot(odom_coord_raw, self.odom_to_slam_tf.T)
         self.current_coord = self.odom_coord
-        # p = Pose()
-        # p.position.x = self.current_coord[0]
-        # p.position.y = self.current_coord[1]
-        # p.position.z = self.current_coord[2]
 
         
 
@@ -103,42 +87,20 @@ class odom_slam_sf(object): # visual odometry drone controler
         self.slam_pose = np.dot(self.slam_pose_correction, self.slam_pose_raw)
         
         if not self.odom_pose_raw == None:
-            #calculates the transfor matrix for the odom position to the slam coords system
-            self.odom_pose_correction = np.dot(self.slam_pose, np.linalg.inv(self.odom_pose_raw))
-            print(self.slam_pose)
-            print()
+            #calculates the transfor matrix for the odom position to the modified slam coords system (assumed as true value)
+            self.odom_pose_correction = np.dot(np.linalg.inv(self.odom_pose_raw),self.slam_pose)
             self.current_pose = self.slam_pose
-            # self.odom_pose_correction = self.calculte_odom_to_slam_tf(odom_coord_raw, self.slam_coord)
         else:
             rospy.loginfo("Havent received any slam coord yet!")
-        # self.current_coord = self.slam_coord
-        # rospy.loginfo("POSE: " + str(self.current_coord))
 
     # ----------------------Sensor Fusion functions--------------------------
-    def calculte_odom_to_slam_tf(self, odom_tf, slam_tf ):
-        odom_tf_inv = np.linalg.inv(odom_tf)
-        return np.dot(self.slam_tf, odom_tf_inv)
-        # """
-        # odom_coord = np.array([x,y,z])  slam_coord = np.array([x,y,z])
-        # dinamicaly calculates the rotation angle and offset position of 2 given coord considering that
-        # both coords system have the same scale and and are properly oriented with z axis pointing up:
-        # returns the odom_to_slam_tf (3x4 matrix)
-        # np.dot( odom_coord, odom_to_slam_tf.T) = slam_coord"""
-        #assumes other known possitions given the considerations
-    
-        # x = np.vstack((odom_coord,odom_coord,odom_coord,odom_coord))+np.eye(4,3 )
-        # y = np.vstack((slam_coord,slam_coord,slam_coord,slam_coord))+np.eye(4,3 )
-        # odom_coord_expanded = np.hstack([x,np.ones((len(x),1))])
-        # # print(odom_coord_expanded)
-        # #yeah... this is kind of a laizy approach...
-        # reg = LinearRegression().fit(x, y)
-        # return np.hstack([reg.coef_,np.expand_dims(reg.intercept_,axis=1)]) #3x4 
+
 
 
     def run(self):
         while not rospy.is_shutdown():
 
-            p = ros_numpy(self.current_pose, Pose)
+            p = ros_numpy(Pose, self.current_pose)
             self.current_pose.publish(p)
 
             self.rate.sleep()

@@ -4,119 +4,152 @@ from sklearn.linear_model import LinearRegression
 import time 
 from geometry_msgs.msg import Point, Pose
 import ros_numpy
+import tf
 
-# import scipy
-def tf(odom_coord, slam_coord):
+def array_to_pose(l):
+    p = Pose()
+    p.position.x = l[0]
+    p.position.y = l[1]
+    p.position.z = l[2]
+    p.orientation.x = l[3]
+    p.orientation.y = l[4]
+    p.orientation.z = l[5]
+    p.orientation.w = l[6]
+    return p
+
+def get_scale_factor(x,y):
+    total_dist_x = 0
+    total_dist_y = 0
+    for i in range(len(x)):
+        for j in range(i+1,len(x)):
+
+            total_dist_x += np.sqrt(np.dot(x[i,:3,3]-x[j,:3,3],x[i,:3,3]-x[j,:3,3]))
+            total_dist_y += np.sqrt(np.dot(y[i,:3,3]-y[j,:3,3],y[i,:3,3]-y[j,:3,3]))
+    return total_dist_y/total_dist_x
+
+pose1 = array_to_pose([1,0,0,0,0,0,0])
+pose2 = array_to_pose([0,0,0,0,0,0,0])
+orb_pose1 = array_to_pose([2,1,3,0,0,0,0])
+orb_pose2 = array_to_pose([1,1,3,0,0,0,0])
+
+x_coords = np.array([[0,0,0,0,0,0,0],[1,0,0,0,0,0,0],[0,1,0,0,0,0,0],[0,0,1,0,0,0,0]],dtype=np.float64)
+test_coords = np.array([[1,0,0,0,0,0,0],[2,-1,1,0,0,0,0],[0,-1,0,0,0,0,0],[1,1,1,0,0,0,0]],dtype=np.float64)
+y_coords = np.array([[0,0,0,0,0,0,0],[1,0,0,0,0,0,0],[0,1,0,0,0,0,0],[0,0,1,0,0,0,0]],dtype=np.float64)
+factor = 2
+
+offset = np.array([0,-2,-1,0,0,0.707,0.707])
+y_coords *= factor
+y_coords += offset
+y_coords = y_coords.tolist()
+print(y_coords)
+
+x = []
+y = []
+test = []
+for i,j,k in zip(x_coords, y_coords,test_coords):
+    x += [ros_numpy.numpify(array_to_pose(i)).tolist()]
+    y += [ros_numpy.numpify(array_to_pose(j)).tolist()]
+    test += [ros_numpy.numpify(array_to_pose(k)).tolist()]
+x = np.array(x)
+y = np.array(y)
+test = np.array(test)
+
+sf = get_scale_factor(x,y)
+sf_i = np.eye(4)
+sf_i *= sf
+sf_i[3,3] = 1
+
+sf_m = np.ones([4,4])
+sf_m[:3,3] = sf
+
+for i in range(len(x)):
+    tfM = np.dot(np.dot(np.linalg.inv(np.dot(sf_i,x[i])),y[i]),sf_i)
+    print(tfM)
+print("------------")
+
+i = 0
+for i in range(len(x)):
+    z = x[i,:,3]
+    print z , 
+    print(np.dot(tfM,z)-offset[:4])
+print(" ---- test ---- ")
+for i in range(len(x)):
+    z = x[i]
+    print z 
+    print(np.dot(tfM,z))
+d = 0
+while 1:
+    d = list(input())
+    if d == 1:
+        break
+    v = ros_numpy.numpify(array_to_pose(d))
+    v2 = np.dot(tfM,v)
     
-    x = np.vstack((odom_coord,odom_coord,odom_coord,odom_coord))+np.eye(4,3 )
-    y = np.vstack((slam_coord,slam_coord,slam_coord,slam_coord))+np.eye(4,3 )
-    odom_coord_expanded = np.hstack([x,np.ones((len(x),1))])
-    # print(odom_coord_expanded)
-    #yeah... this is kind of a laizy approach...
-    reg = LinearRegression().fit(x, y)
-    return np.hstack([reg.coef_,np.expand_dims(reg.intercept_,axis=1)])
+    print(v2)
+    print(ros_numpy.msgify(Pose,v2))
+# print()
+# print(np.dot(tfM_1,x[:,3]))
 
-pose1 = Pose()
-pose1.position.x = 1
-pose1.position.y = 0
-pose1.position.z = 0
-pose1.orientation.x = 0
-pose1.orientation.y = 0.707
-pose1.orientation.z = 0
-pose1.orientation.w = 0.707
-
-pose2 = Pose()
-pose2.position.x = 0
-pose2.position.y = 0
-pose2.position.z = 0
-pose2.orientation.x = 0
-pose2.orientation.y = 0.707
-pose2.orientation.z = 0
-pose2.orientation.w = 0.707
-
-orb_pose3 = Pose()
-orb_pose3.position.x = 1
-orb_pose3.position.y = 0
-orb_pose3.position.z = 0
-orb_pose3.orientation.x = 0
-orb_pose3.orientation.y = 0
-orb_pose3.orientation.z = 0
-orb_pose3.orientation.w = 0
-
-orb_pose1 = Pose()
-orb_pose1.position.x = 2
-orb_pose1.position.y = 0
-orb_pose1.position.z = 3
-orb_pose1.orientation.x = 0
-orb_pose1.orientation.y = 0
-orb_pose1.orientation.z = 0
-orb_pose1.orientation.w = 1
-
-orb_pose2 = Pose()
-orb_pose2.position.x = 1
-orb_pose2.position.y = 0
-orb_pose2.position.z = 3
-orb_pose2.orientation.x = 0
-orb_pose2.orientation.y = 0
-orb_pose2.orientation.z = 0
-orb_pose2.orientation.w = 1
+"""
 
 c1 = ros_numpy.numpify(pose1)
 c2 = ros_numpy.numpify(pose2)
+
 orb_c1 = ros_numpy.numpify(orb_pose1)
 orb_c2 = ros_numpy.numpify(orb_pose2)
-orb_c3 = ros_numpy.numpify(orb_pose3)
+
 print(c1)
 print(c2)
+
+def get_scale_factor(x,y):
+    total_dist_slam = 0
+    total_dist_final = 0
+    for i in range(len(x)):
+        for j in range(i+1,len(x)):
+            print(i,j)
+            total_dist_slam += np.sqrt(np.dot(x[i,:3,3]-x[j,:3,3],x[i,:3,3]-x[j,:3,3]))
+            total_dist_final += np.sqrt(np.dot(y[i,:3,3]-y[j,:3,3],y[i,:3,3]-y[j,:3,3]))
+    return total_dist_final/total_dist_slam
 
 
 dist_c = np.sqrt(np.dot(c1[:3,3]-c2[:3,3],c1[:3,3]-c2[:3,3]))
 dist_orb = np.sqrt(np.dot(orb_c1[:3,3]-orb_c2[:3,3],orb_c1[:3,3]-orb_c2[:3,3]))
 scale_factor = dist_c/dist_orb
 
-# scale_factor_m = np.eye([4,4])
-# scale_factor_m[3,3] = 0
-# scale_factor_m *= scale_factor
-# scale_factor_m +=1
+scale_factor_m2 = np.eye(4)
+scale_factor_m2 *= scale_factor
+scale_factor_m2[3,3] = 1
+# scale_factor_m2 *= scale_factor-1
+# scale_factor_m2 +=1
 scale_factor_m = np.ones([4,4])
 scale_factor_m[:3,3] = scale_factor
 
-# orb_pose1 = ros_numpy.msgify(Pose,orb_c1)
-# orb_pose2 = ros_numpy.msgify(Pose,orb_c2)
-
-# orb_pose1.position.x *= scale_factor
-# orb_pose1.position.y *= scale_factor
-# orb_pose1.position.z *= scale_factor
-
-# orb_pose2.position.x *= scale_factor
-# orb_pose2.position.y *= scale_factor
-# orb_pose2.position.z *= scale_factor
-
-# orb_c1 = ros_numpy.numpify(orb_pose1)
-# orb_c2 = ros_numpy.numpify(orb_pose2)
+scale_factor_m3 = np.eye(4)
+scale_factor_m3 *= scale_factor
 
 print(scale_factor_m)
 # tfM_1 = np.dot(c1,np.linalg.inv(orb_c1))
 # tfM_2 = np.dot(c2,np.linalg.inv(orb_c2))
-tfM_1 = np.dot(c1,np.linalg.inv(orb_c1))
-tfM_2 = np.dot(c2,np.linalg.inv(orb_c2))
+# tfM_1 = np.dot(np.linalg.inv(np.dot(scale_factor_m2,orb_c1)),c1)#,scale_factor_m2)
+
+tfM_1 = np.dot(np.dot(np.linalg.inv(orb_c1*scale_factor_m),c1),scale_factor_m2)
+tfM_2 = np.dot(np.linalg.inv(orb_c2*scale_factor_m),c2)
 
 print("---")
 print(tfM_1)
 print(tfM_2)
-print("---")
-print(np.dot(tfM_1,orb_c1))
-print(np.dot(tfM_2,orb_c2))
-print("-------------------")
-print(np.dot(tfM_1,orb_c3))
-print(np.dot(tfM_2,orb_c3))
-# print(np.dot(tfM_1,c1))
-# print(np.dot(tfM_2,c2))
+# print("---")
+# print(np.dot(tfM_1,orb_c1[:,3]))
+# print(np.dot(tfM_2,orb_c2[:,3]))
+# print("-------------------")
 
-# reg = LinearRegression().fit([orb_c1,orb_c2], [c1,c2])
-# print("---reg---")
-# print(reg.coef_)
-# print(reg.intercept_)
+
+
+
+print("===============")
+# print(orb_c3)
+# print(scale_factor_m2)
+# print(np.dot(scale_factor_m2,orb_c3))
 
 # x = np.array([5-1,3-1,1-1])
 # y = np.array([5,3,1])
@@ -128,4 +161,10 @@ print(np.dot(tfM_2,orb_c3))
 # x2 = np.array([1,2,-3,1])
 # x = np.array([5-1,3-1,1-1,1])
 # print(np.dot(x,M.T))
+
 # print(np.dot(x2,M.T))
+# print((orb_c3)[:,3])
+print(np.dot(tfM_1,(orb_c3)[:,3]))
+print(np.dot(tfM_2,(orb_c3*scale_factor_m)[:,3]))
+# print(tf.transformations.quaternion_from_euler(0,0,0))
+"""
