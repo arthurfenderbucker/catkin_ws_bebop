@@ -23,10 +23,14 @@ rospack = rospkg.RosPack()
 class odom_slam_sf(object): # visual odometry drone controler
     
     current_coord = np.array([0.0,0.0,0.0])
+
+    current_pose = Pose()
     angle_pose = 0.0
     odom_to_slam_tf = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0]]) # initially no transformation
-    odom_pose = np.array([0.0,0.0,0.0])
     slam_coord = None
+    odom_pose_correction = np.eye(4)
+    odom_pose_raw_np = np.eye(4)
+    odom_pose = None
 
     def __init__(self):
 
@@ -37,7 +41,7 @@ class odom_slam_sf(object): # visual odometry drone controler
         self.odom_topic = rospy.get_param('~odom_topic','/bebop/odom/')
         self.slam_pose_topic = rospy.get_param('~slam_pose_topic','/orb_slam2_mono/pose')
         config_path = rospy.get_param('~config_path',str(rospack.get_path('odom_slam_sensor_fusion')+'/config/maps/recorded_maps.json'))
-        map_name = rospy.get_param('~map_name',"test_map")
+        map_name = rospy.get_param('~map_name',"default")
 
        
         try:
@@ -65,18 +69,19 @@ class odom_slam_sf(object): # visual odometry drone controler
             "odom_slam_sf/current_coord", Point, queue_size=1)
 
         self.current_pose_pub = rospy.Publisher(
-            "odom_slam_sf/current_position", Pose, queue_size=1)
+            "odom_slam_sf/current_pose", Pose, queue_size=1)
 
         rospy.loginfo("setup ok")
 
     # ------------ topics callbacks -----------
     def odometry_callback(self, odom):
 
-        print(ros_numpy.numpify(odom.pose.pose))
-        self.odom_pose_raw = ros_numpy.numpify(odom.pose.pose)
         
-        self.current_coord = self.odom_coord
-
+        self.odom_pose = odom.pose.pose
+        self.odom_pose_raw_np = ros_numpy.numpify(odom.pose.pose)
+        
+        self.current_pose_np = np.dot(self.odom_pose_correction, self.odom_pose_raw_np)
+        self.current_pose = ros_numpy.msgify(Pose, self.current_pose_np)
         
 
     def slam_callback(self,pose):
@@ -86,12 +91,13 @@ class odom_slam_sf(object): # visual odometry drone controler
         # self.slam_coord = np.dot(np.hstack((raw_slam_coord,[1])),self.slam_tf_matrix)
         self.slam_pose = np.dot(self.slam_pose_correction, self.slam_pose_raw)
         
-        if not self.odom_pose_raw == None:
+        if not self.odom_pose == None:
             #calculates the transfor matrix for the odom position to the modified slam coords system (assumed as true value)
-            self.odom_pose_correction = np.dot(np.linalg.inv(self.odom_pose_raw),self.slam_pose)
-            self.current_pose = self.slam_pose
+            self.odom_pose_correction = np.dot(np.linalg.inv(self.odom_pose_raw_np),self.slam_pose)
         else:
-            rospy.loginfo("Havent received any slam coord yet!")
+            rospy.loginfo("Havent received any odom coord yet!")
+        self.current_pose = ros_numpy.msgify(Pose,self.slam_pose)
+        self.current_pose_np = self.slam_pose
 
     # ----------------------Sensor Fusion functions--------------------------
 
@@ -100,8 +106,7 @@ class odom_slam_sf(object): # visual odometry drone controler
     def run(self):
         while not rospy.is_shutdown():
 
-            p = ros_numpy(Pose, self.current_pose)
-            self.current_pose.publish(p)
+            self.current_pose_pub.publish(self.current_pose)
 
             self.rate.sleep()
 

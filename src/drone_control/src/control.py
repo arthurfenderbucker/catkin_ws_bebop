@@ -26,10 +26,10 @@ class vso_controler(object): # visual odometry drone controler
     positioning_vel = np.array([0.0,0.0,0.0,0.0])
 
 
-    pid_x = PID(P=0.0,I=0.0,D=0.0)
-    pid_y = PID(P=0.0,I=0.0,D=0.0)
-    pid_z = PID(P=0.0,I=0.0,D=0.0)
-    pid_ang_z = PID(P=0.0,I=0.0,D=0.0)
+    pid_x = PID(P=0.000,I=0.0,D=0.0)
+    pid_y = PID(P=0.000,I=0.0,D=0.0)
+    pid_z = PID(P=0.000,I=0.0,D=0.0)
+    pid_ang_z = PID(P=0.0004,I=0.0,D=0.0)
 
     camera_angle = Twist()
     setted_vel = Twist()
@@ -57,7 +57,7 @@ class vso_controler(object): # visual odometry drone controler
         rospy.Subscriber('/bebop/land', Empty, self.land)
         rospy.Subscriber('/bebop/takeoff', Empty, self.takeoff)
         
-        rospy.Subscriber('/odom_slam_sf/current_psoe', Pose, self.position_callback)
+        rospy.Subscriber('/odom_slam_sf/current_pose', Pose, self.current_pose_callback)
 
         
         rospy.Subscriber('/control/position', Pose, self.position_callback)
@@ -83,8 +83,7 @@ class vso_controler(object): # visual odometry drone controler
             self.align_camera()
         rospy.loginfo("setup ok")
         self.goal_pose = self.current_pose
-        self.current_z_ang = self.euler_from_pose(self.current_pose)[2]
-        self.pid_setpoint(self.goal_pose,self.current_z_ang)
+        self.pid_setpoint(self.goal_pose)
 
     # ------------ topics callbacks -----------
     def set_runninng_state(self,boolean_state):
@@ -100,21 +99,28 @@ class vso_controler(object): # visual odometry drone controler
         self.goal_pose = goal_pose
         self.goal_pose_np = ros_numpy.numpify(goal_pose)
         self.goal_z_ang = self.euler_from_pose(self.goal_pose)[2]
-        self.pid_setpoint(self.goal_pose[:3,3], self.goal_z_ang)
+        self.pid_setpoint(self.goal_pose)
         self.control_mode = "position"
 
-    def position_relative_callback(self, goal_pose):
-        pass
-        # self.goal_pose = ros_numpy.numpify(goal_pose)
-        # self.pid_setpoint(self.goal_pose[:3,3])
-        # self.control_mode = "position"
+    def position_relative_callback(self, new_goal_pose):
+        self.goal_pose.position.x += new_goal_pose.position.x
+        self.goal_pose.position.y += new_goal_pose.position.y
+        self.goal_pose.position.z += new_goal_pose.position.z
+        new_z_ang = self.euler_from_pose(self.goal_pose)[2] + self.euler_from_pose(new_goal_pose)[2]
+        if new_z_ang < -np.pi: new_z_ang+= np.pi
+        if new_z_ang > np.pi: new_z_ang-= np.pi
+        quarterion = tf.transformations.quaternion_from_euler(0,0,new_z_ang)
+        self.goal_pose.orientation.x = quarterion[0]
+        self.goal_pose.orientation.y = quarterion[1]
+        self.goal_pose.orientation.z = quarterion[2]
+        self.goal_pose.orientation.w = quarterion[3]
 
     def current_pose_callback(self, current_pose):
         self.current_pose = current_pose
+        
         self.current_pose_np = ros_numpy.numpify(current_pose)
         self.current_z_ang = self.euler_from_pose(current_pose)[2]
-        self.calculate_vel()
-        
+        self.positioning_vel = self.calculate_vel(self.current_pose)       
 
 
     def velocity_callback(self, goal_vec): #Point
@@ -153,31 +159,31 @@ class vso_controler(object): # visual odometry drone controler
         self.camera_angle.angular.z = 0
         self.camera_angle_pub.publish(self.camera_angle)
 
-    def calculate_vel(self):
-        self.positioning_vel = self.pid_update(self.current_pose)
-        rospy.loginfo("VELOCITY: x: " + str(self.positioning_vel[0]) + " y: " + str(self.positioning_vel[1]) + " z: " + str(self.positioning_vel[2]))
+    def calculate_vel(self,pose):
+        return self.pid_update(pose)
     
-    def pid_setpoint(self, goal, ang):
-        self.pid_x.setPoint(goal.position.x)
-        self.pid_y.setPoint(goal.position.y)
-        self.pid_z.setPoint(goal.position.z)
-        if ang != None:
-            self.pid_ang_z.setPoint(ang)
+    def pid_setpoint(self, goal_pose):
+        self.pid_x.setPoint(goal_pose.position.x)
+        self.pid_y.setPoint(goal_pose.position.y)
+        self.pid_z.setPoint(goal_pose.position.z)
+        ang_z = self.euler_from_pose(goal_pose)[2]
+        self.pid_ang_z.setPoint(ang_z)
 
-    def pid_update(self, new_pose, new_ang):
+    def pid_update(self, new_pose):
         #linear update
         vel_x = self.pid_x.update(new_pose.position.x)
         vel_y = self.pid_y.update(new_pose.position.y)
         vel_z = self.pid_z.update(new_pose.position.x)
         #angular update
+        new_ang_z = self.euler_from_pose(new_pose)[2]
         #check shortest way
         goal_ang = self.pid_ang_z.getPoint() 
-        if new_ang - goal_ang > np.pi:
-            new_ang -= 2*np.pi
-        elif new_ang - goal_ang < -np.pi:
-            new_ang += 2*np.pi
-        vel_ang = self.pid_ang_z.update(new_ang)
-        return np.array([vel_x,vel_y,vel_z,])
+        if new_ang_z - goal_ang > np.pi:
+            new_ang_z -= 2*np.pi
+        elif new_ang_z - goal_ang < -np.pi:
+            new_ang_z += 2*np.pi
+        vel_ang = self.pid_ang_z.update(new_ang_z)
+        return np.array([vel_x,vel_y,vel_z,vel_ang])
 
     def run(self):
         while not rospy.is_shutdown():
@@ -187,13 +193,7 @@ class vso_controler(object): # visual odometry drone controler
                 adjusted_vel.linear.y = self.positioning_vel[1]
                 adjusted_vel.linear.z = self.positioning_vel[2]
                 adjusted_vel.angular.z = self.positioning_vel[3]
-                print(self.positioning_vel)
-                # if self.control_mode == "position":
-                    
-                # else:
-                #     adjusted_vel.linear.z = self.setted_vel[0]
-                #     adjusted_vel.linear.y = self.setted_vel[1]
-                #     adjusted_vel.linear.x = self.setted_vel[2]
+                print(adjusted_vel)
 
                 self.setpoint_velocity_pub.publish(adjusted_vel)
 
