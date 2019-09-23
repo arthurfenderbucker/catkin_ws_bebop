@@ -31,6 +31,7 @@ class odom_slam_sf(object): # visual odometry drone controler
     odom_pose_correction = np.eye(4)
     odom_pose_raw_np = np.eye(4)
     odom_pose = None
+    last_slam_time = 0 
 
     def __init__(self):
 
@@ -42,7 +43,7 @@ class odom_slam_sf(object): # visual odometry drone controler
         self.slam_pose_topic = rospy.get_param('~slam_pose_topic','/orb_slam2_mono/pose')
         config_path = rospy.get_param('~config_path',str(rospack.get_path('odom_slam_sensor_fusion')+'/config/maps/recorded_maps.json'))
         map_name = rospy.get_param('~map_name',"default")
-
+        
        
         try:
             with open(config_path, 'r') as json_data_file:
@@ -54,6 +55,7 @@ class odom_slam_sf(object): # visual odometry drone controler
             calibration_data = calibration_file_data[map_name]
             
             self.slam_pose_correction = np.array(calibration_data["pose_correction_matrix"])
+            self.scale_factor_matrix = np.array(calibration_data["scale_factor_matrix"])
             rospy.loginfo("calibration loaded")
         else:
             rospy.logerr("error loading \""+map_name+"\" calibration data")
@@ -70,7 +72,8 @@ class odom_slam_sf(object): # visual odometry drone controler
 
         self.current_pose_pub = rospy.Publisher(
             "odom_slam_sf/current_pose", Pose, queue_size=1)
-
+        self.odom_pose_pub = rospy.Publisher(
+            "odom_slam_sf/odom_pose", Pose, queue_size=1)
         rospy.loginfo("setup ok")
 
     # ------------ topics callbacks -----------
@@ -80,17 +83,18 @@ class odom_slam_sf(object): # visual odometry drone controler
         self.odom_pose = odom.pose.pose
         self.odom_pose_raw_np = ros_numpy.numpify(odom.pose.pose)
         
-        self.current_pose_np = np.dot(self.odom_pose_correction, self.odom_pose_raw_np)
+        self.current_pose_np = np.dot(self.odom_pose_raw_np, self.odom_pose_correction)
         self.current_pose = ros_numpy.msgify(Pose, self.current_pose_np)
+        self.odom_pose_pub.publish(self.current_pose)
         
 
     def slam_callback(self,pose):
         self.slam_pose_raw = ros_numpy.numpify(pose.pose) #homogeneous transformation matrix from the origin
         
-        #adjust the received raw_slam_coord to the desire coords system
-        # self.slam_coord = np.dot(np.hstack((raw_slam_coord,[1])),self.slam_tf_matrix)
         self.slam_pose = np.dot(self.slam_pose_correction, self.slam_pose_raw)
-        
+        self.slam_pose = self.slam_pose*self.scale_factor_matrix
+
+        self.last_slam_time=time.time()        
         if not self.odom_pose == None:
             #calculates the transfor matrix for the odom position to the modified slam coords system (assumed as true value)
             self.odom_pose_correction = np.dot(np.linalg.inv(self.odom_pose_raw_np),self.slam_pose)
@@ -107,7 +111,8 @@ class odom_slam_sf(object): # visual odometry drone controler
         while not rospy.is_shutdown():
 
             self.current_pose_pub.publish(self.current_pose)
-
+            if time.time()-self.last_slam_time > 0.5: print("NO SLAM!!!")
+            else: print("SLAM")
             self.rate.sleep()
 
 

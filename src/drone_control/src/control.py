@@ -23,21 +23,22 @@ class vso_controler(object): # visual odometry drone controler
     
     goal_pose = Pose()
     current_pose = Pose()
+    goal_pose.orientation.w = 1
+    goal_pose.position.z = 1
     positioning_vel = np.array([0.0,0.0,0.0,0.0])
 
 
-    pid_x = PID(P=0.000,I=0.0,D=0.0)
-    pid_y = PID(P=0.000,I=0.0,D=0.0)
-    pid_z = PID(P=0.000,I=0.0,D=0.0)
-    pid_ang_z = PID(P=0.0004,I=0.0,D=0.0)
+    pid_x = PID(P=0.005,I=0.0000,D=0.0035)
+    pid_y = PID(P=0.005,I=0.0000,D=0.0035)
+    pid_z = PID(P=0.01,I=0.0000,D=0.0012)
+    pid_ang = PID(P=0.066,I=0.0,D=0.0)
 
     camera_angle = Twist()
     setted_vel = Twist()
 
     control_mode = "position" # position or velocity  
-    trust_vso = 0
-    last_vso_time = 0 
-
+    precision = np.array([0.10,0.10,0.05,0.1])
+    count_aligned = 0
     def __init__(self):
 
         #setup node
@@ -55,7 +56,8 @@ class vso_controler(object): # visual odometry drone controler
         calibrate_pid = rospy.get_param('~calibrate_pid',False)
 
         rospy.Subscriber('/bebop/land', Empty, self.land)
-        rospy.Subscriber('/bebop/takeoff', Empty, self.takeoff)
+        rospy.Subscriber('/bebop/reset', Empty, self.land)
+        # rospy.Subscriber('/bebop/takeoff', Empty, self.takeoff)
         
         rospy.Subscriber('/odom_slam_sf/current_pose', Pose, self.current_pose_callback)
 
@@ -71,8 +73,10 @@ class vso_controler(object): # visual odometry drone controler
         self.running_sub = rospy.Subscriber(
             "control/set_runnig_state", Bool, self.set_runninng_state, queue_size=1)
         self.current_pose_pub = rospy.Publisher(
-            "control/current_position", Point, queue_size=1)
-
+            "control/current_position", Pose, queue_size=1)
+        self.aligned = rospy.Publisher(
+            "/control/aligned", Bool, queue_size=1)
+            
         #dynamic parameters serve
         if calibrate_pid:
             srv = Server(ControlConfig, self.parameters_callback)
@@ -82,15 +86,16 @@ class vso_controler(object): # visual odometry drone controler
         while time.time() - t < 1:
             self.align_camera()
         rospy.loginfo("setup ok")
-        self.goal_pose = self.current_pose
         self.pid_setpoint(self.goal_pose)
+        # self.reset()
 
     # ------------ topics callbacks -----------
     def set_runninng_state(self,boolean_state):
         self.running = boolean_state.data
+        self.reset_pid()
 
     def land(self,callback_data):
-        self.vso_on = False
+        self.running = False
 
     def takeoff(self,callback_data):
         self.align_camera()
@@ -102,11 +107,18 @@ class vso_controler(object): # visual odometry drone controler
         self.pid_setpoint(self.goal_pose)
         self.control_mode = "position"
 
-    def position_relative_callback(self, new_goal_pose):
-        self.goal_pose.position.x += new_goal_pose.position.x
-        self.goal_pose.position.y += new_goal_pose.position.y
-        self.goal_pose.position.z += new_goal_pose.position.z
-        new_z_ang = self.euler_from_pose(self.goal_pose)[2] + self.euler_from_pose(new_goal_pose)[2]
+    def position_relative_callback(self, relative_pose):
+
+        ang_z = self.euler_from_pose(self.current_pose)[2]
+        print(ang_z)
+        delta_x = relative_pose.position.x*np.cos(ang_z)-relative_pose.position.y*np.sin(ang_z)
+        delta_y = relative_pose.position.y*np.cos(ang_z)+relative_pose.position.x*np.sin(ang_z)
+
+        self.goal_pose.position.x += delta_x
+        self.goal_pose.position.y += delta_y
+
+        self.goal_pose.position.z += relative_pose.position.z
+        new_z_ang = self.euler_from_pose(self.goal_pose)[2] + self.euler_from_pose(relative_pose)[2]
         if new_z_ang < -np.pi: new_z_ang+= np.pi
         if new_z_ang > np.pi: new_z_ang-= np.pi
         quarterion = tf.transformations.quaternion_from_euler(0,0,new_z_ang)
@@ -114,6 +126,20 @@ class vso_controler(object): # visual odometry drone controler
         self.goal_pose.orientation.y = quarterion[1]
         self.goal_pose.orientation.z = quarterion[2]
         self.goal_pose.orientation.w = quarterion[3]
+        self.pid_setpoint(self.goal_pose)
+        self.control_mode = "position"
+    # def position_relative_callback(self, new_goal_pose):
+    #     self.goal_pose.position.x += new_goal_pose.position.x
+    #     self.goal_pose.position.y += new_goal_pose.position.y
+    #     self.goal_pose.position.z += new_goal_pose.position.z
+    #     new_z_ang = self.euler_from_pose(self.goal_pose)[2] + self.euler_from_pose(new_goal_pose)[2]
+    #     if new_z_ang < -np.pi: new_z_ang+= np.pi
+    #     if new_z_ang > np.pi: new_z_ang-= np.pi
+    #     quarterion = tf.transformations.quaternion_from_euler(0,0,new_z_ang)
+    #     self.goal_pose.orientation.x = quarterion[0]
+    #     self.goal_pose.orientation.y = quarterion[1]
+    #     self.goal_pose.orientation.z = quarterion[2]
+    #     self.goal_pose.orientation.w = quarterion[3]
 
     def current_pose_callback(self, current_pose):
         self.current_pose = current_pose
@@ -131,13 +157,14 @@ class vso_controler(object): # visual odometry drone controler
 
     def parameters_callback(self, config, level):
 
-        rospy.loginfo("""Reconfigure Request: \n P_x {P_x} I_x {I_x} D_x {D_x} \n P_y {P_y} I_y {I_y} D_y {D_y} \n P_z {P_z} I_z {I_z} D_z {D_z} \n
-                                        \n mult_P_x {mult_P_x} mult_I_x {mult_I_x} mult_D_x {mult_D_x} \n mult_P_y {mult_P_y} mult_I_y {mult_I_y} mult_D_y {mult_D_y} \n mult_P_z {mult_P_z} mult_I_z {mult_I_z} mult_D_z {mult_D_z}mult_x 10^{mult_P_x}""".format(**config))
+        rospy.loginfo("""Reconfigure Request: \n Running: {running}\n P_x {P_x} I_x {I_x} D_x {D_x} \n P_y {P_y} I_y {I_y} D_y {D_y} \n P_z {P_z} I_z {I_z} D_z {D_z} \n P_ang {P_ang} I_ang {I_ang} D_ang {D_ang} \n
+                                        \n mult_P_x {mult_P_x} mult_I_x {mult_I_x} mult_D_x {mult_D_x} \n mult_P_y {mult_P_y} mult_I_y {mult_I_y} mult_D_y {mult_D_y} \n mult_P_z {mult_P_z} mult_I_z {mult_I_z} mult_D_z {mult_D_z}\n mult_P_ang {mult_P_ang} mult_I_ang {mult_I_ang} mult_D_ang {mult_D_ang}""".format(**config))
 
         self.pid_x.set_PID_constants(config.P_x*10**config.mult_P_x, config.I_x*10**config.mult_I_x, config.D_x*10**config.mult_D_x)
         self.pid_y.set_PID_constants(config.P_y*10**config.mult_P_y, config.I_y*10**config.mult_I_y, config.D_y*10**config.mult_D_y)
         self.pid_z.set_PID_constants(config.P_z*10**config.mult_P_z, config.I_z*10**config.mult_I_z, config.D_z*10**config.mult_D_z)
-        
+        self.pid_ang.set_PID_constants(config.P_ang*10**config.mult_P_ang, config.I_ang*10**config.mult_I_ang, config.D_ang*10**config.mult_D_ang)
+        self.running = config.running
         return config
 
     # ------- service handles ----------
@@ -160,49 +187,72 @@ class vso_controler(object): # visual odometry drone controler
         self.camera_angle_pub.publish(self.camera_angle)
 
     def calculate_vel(self,pose):
-        return self.pid_update(pose)
-    
+        v_x_raw, v_y_raw, v_z, v_ang = self.pid_update(pose)
+        ang_z = self.euler_from_pose(pose)[2]
+        v_x = np.cos(ang_z)*v_x_raw+np.sin(ang_z)*v_y_raw
+        v_y = np.cos(ang_z)*v_y_raw-np.sin(ang_z)*v_x_raw
+        # v_x, v_y, v_z = np.dot(self.current_pose_np[:3,:3],np.array([v_x,v_y,v_z])).tolist()
+        return [v_x, v_y, v_z, v_ang]
+    def reset_pid(self):
+        self.pid_x.setIntegrator(0)
+        self.pid_y.setIntegrator(0)
+        self.pid_z.setIntegrator(0)
+        self.pid_ang.setIntegrator(0)
+
     def pid_setpoint(self, goal_pose):
         self.pid_x.setPoint(goal_pose.position.x)
         self.pid_y.setPoint(goal_pose.position.y)
         self.pid_z.setPoint(goal_pose.position.z)
         ang_z = self.euler_from_pose(goal_pose)[2]
-        self.pid_ang_z.setPoint(ang_z)
+        self.pid_ang.setPoint(ang_z)
 
     def pid_update(self, new_pose):
         #linear update
         vel_x = self.pid_x.update(new_pose.position.x)
         vel_y = self.pid_y.update(new_pose.position.y)
-        vel_z = self.pid_z.update(new_pose.position.x)
+        vel_z = self.pid_z.update(new_pose.position.z)
         #angular update
         new_ang_z = self.euler_from_pose(new_pose)[2]
         #check shortest way
-        goal_ang = self.pid_ang_z.getPoint() 
+        goal_ang = self.pid_ang.getPoint() 
         if new_ang_z - goal_ang > np.pi:
             new_ang_z -= 2*np.pi
         elif new_ang_z - goal_ang < -np.pi:
             new_ang_z += 2*np.pi
-        vel_ang = self.pid_ang_z.update(new_ang_z)
+        vel_ang = self.pid_ang.update(new_ang_z)
         return np.array([vel_x,vel_y,vel_z,vel_ang])
+    def pid_get_error(self):
+        return [self.pid_x.getError(),self.pid_y.getError(),self.pid_z.getError(),self.pid_ang.getError()]
+    def check_aligment(self):
+        e = self.pid_get_error()
 
+        if abs(e[0]) > self.precision[0] or abs(e[1]) > self.precision[1] or abs(e[2]) > self.precision[2] and abs(e[3]) > self.precision[3]:
+            self.count_aligned = 0
+        else:
+            self.count_aligned += 1
+
+        if self.count_aligned > 3:
+            rospy.loginfo("ALIGNED!!")
+            self.aligned.publish(True)
+    
     def run(self):
         while not rospy.is_shutdown():
             if self.running:
+                
+                self.check_aligment()
+
                 adjusted_vel = Twist()
                 adjusted_vel.linear.x = self.positioning_vel[0]
                 adjusted_vel.linear.y = self.positioning_vel[1]
                 adjusted_vel.linear.z = self.positioning_vel[2]
                 adjusted_vel.angular.z = self.positioning_vel[3]
-                print(adjusted_vel)
+                
 
                 self.setpoint_velocity_pub.publish(adjusted_vel)
 
-                p = Point()
-                p.x = self.current_pose.position.x
-                p.y = self.current_pose.position.y
-                p.z = self.current_pose.position.z
-                self.current_pose_pub.publish(p)
-                
+                # print(adjusted_vel)
+                # print(self.pid_get_error())
+            self.current_pose_pub.publish(self.current_pose)
             self.rate.sleep()
 
 

@@ -4,7 +4,7 @@ import numpy as np
 import math
 
 from geometry_msgs.msg import PoseStamped, TwistStamped, Twist, Point, Vector3
-from std_msgs.msg import Bool, Float32
+from std_msgs.msg import Bool, Float32, Empty
 from PID import PID
 
 class adjust_position():
@@ -12,7 +12,7 @@ class adjust_position():
     bool_align = False
     last_ref_point_time = 0
     
-    goal_point = np.append( image_shape.copy() / 2, 135) # center of the image as default
+    goal_point = np.append( image_shape.copy() / 2, 220) # center of the image as default
     current_point = goal_point.copy() 
     precision = np.array([40,40,5]) # pixels
 
@@ -32,9 +32,9 @@ class adjust_position():
 
     pid_x_calibration_data_dist = [ 3 ,4, 5  ,30] # [ 2.16 ,3.52,4.36,30]
 
-    pid_x = PID(P=0.0003,I=0.000001,D=0.02)
-    pid_y = PID(P=0.004, I=0.00001,D=0.02)
-    pid_z = PID(P=0.0004,I=0.000001,D=0.004)
+    pid_x = PID(P=0.0005,I=0.0000001,D=0.002)
+    pid_y = PID(P=0.001, I=0.0000001,D=0.002)
+    pid_z = PID(P=0.0003,I=0.0000001,D=0.0004)
 
     pid_x.setPoint(goal_point[0])
     pid_y.setPoint(goal_point[1])
@@ -48,7 +48,7 @@ class adjust_position():
         rospy.init_node('align_reference', anonymous=True)
         self.rate = rospy.Rate(25) # 20hz
 
-        self.running = rospy.get_param('~running',True)
+        self.running = rospy.get_param('~running',False)
 
 
         rospy.Subscriber(
@@ -60,7 +60,8 @@ class adjust_position():
         
         rospy.Subscriber(
                     "/control/align_reference/set_camera_angle", Float32, self.set_camera_angle, queue_size=1)
-        
+        rospy.Subscriber('/bebop/land', Empty, self.land,queue_size=10)
+        rospy.Subscriber('/bebop/reset', Empty, self.land,queue_size=10)
         self.running_sub= rospy.Subscriber(
             "control/align_reference/set_runnig_state", Bool, self.set_runninng_state, queue_size=1)
         
@@ -74,6 +75,8 @@ class adjust_position():
 
     # ================ topic callback functions ===================
 
+    def land(self,data):
+        self.running = False
     def point_callback(self, data): #point
         self.last_ref_point_time = rospy.get_time()
         self.bool_align = True
@@ -95,6 +98,7 @@ class adjust_position():
 
     def set_runninng_state(self,boolean_state):
         self.running = boolean_state.data
+        self.reset_pid()
 
     def set_camera_angle(self,data):#float
         self.camera_angle = data.data
@@ -106,7 +110,7 @@ class adjust_position():
         setted_vel.linear.x = vel[2] *self.trust_factor
         setted_vel.linear.y = vel[0] *self.trust_factor
         setted_vel.linear.z = vel[1] *self.trust_factor
-
+        print(setted_vel)
         self.setpoint_vel_pub.publish(setted_vel)
 
 
@@ -129,6 +133,10 @@ class adjust_position():
                 self.pub_vel(vel)
             self.rate.sleep()
 
+    def reset_pid(self):
+        self.pid_x.setIntegrator(0)
+        self.pid_y.setIntegrator(0)
+        self.pid_z.setIntegrator(0)
     def get_distance(self):
         d = self.f*self.target_radium_real_size/self.current_point[2]
         print(d)
@@ -165,7 +173,7 @@ class adjust_position():
         e.z = self.pid_z.getError()
         print(e.x,e.y,e.z)
         self.pid_error_pub.publish(e)
-        print(vel)
+        # print(vel)
         if abs(e.x) > self.precision[0] or abs(e.y) > self.precision[1] or abs(e.z) > self.precision[2]:
             self.bool_align = False
             self.count_aligned = 0

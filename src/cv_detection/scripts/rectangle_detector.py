@@ -10,6 +10,11 @@ import time
 
 from cv_bridge import CvBridge, CvBridgeError
 
+import rospkg
+rospack = rospkg.RosPack()
+detections_path = str(rospack.get_path('cv_detection')+'/imgs/rectangle/')
+
+
 bridge = CvBridge()
 
 class rectangle_detector(object):
@@ -23,6 +28,12 @@ class rectangle_detector(object):
         print("init")
         self.img_topic = rospy.get_param('~image_topic',image_topic)
         self.pub_topic = rospy.get_param('~pub_topic',pub_topic)
+        # self.crop_rect = rospy.get_param('~crop_rect',False)
+        # self.cropped_rect_pub_topic = rospy.get_param('~cropped_rect_pub_topic','/cv_detection/rectangle_detector/cropped_rect')
+        # self.save_detection = rospy.get_param('~save_detection',False)
+        self.save_detection_path = rospy.get_param('~save_detection_path',detections_path)
+        self.save_detection_name = rospy.get_param('~save_detection_path','default.png')
+
         self.running = rospy.get_param('~running',True)
 
         self.image_topic_sub = rospy.Subscriber(
@@ -31,10 +42,16 @@ class rectangle_detector(object):
             "cv_detection/rectangle_detector/set_pub_topic", String, self.set_pub_topic, queue_size=None)
         self.running_sub= rospy.Subscriber(
             "cv_detection/rectangle_detector/set_runnig_state", Bool, self.set_runninng_state, queue_size=None)
+        
+        self.save_detection_sub = rospy.Subscriber(
+            "cv_detection/rectangle_detector/save_detection", String, self.save_detection, queue_size=None)
+
         self.ref_pub = rospy.Publisher(self.pub_topic, Point, queue_size=1)
+        self.detection_saved_pub = rospy.Publisher('cv_detection/rectangle_detector/detection_saved',Bool, queue_size=1)
+
         self.count_fps = 0
         self.t_0 = 0
-
+        self.rect = None
     def set_image_topic(self, topic_name):
         self.img_topic = topic_name.data
 
@@ -44,7 +61,44 @@ class rectangle_detector(object):
 
     def set_runninng_state(self,boolean_state):
         self.running = boolean_state.data
+        if not self.running:
+            cv2.destroyAllWindows()
 
+    def save_detection(self,file_name):
+        
+        if not self.rect == None:
+            img_crop, img_rot = self.crop_rect(self.image,self.rect)
+            try:
+                print("crop saved to:")
+                print(self.save_detection_path+'cropped/'+file_name.data)
+                cv2.imwrite(self.save_detection_path+'cropped/'+file_name.data, img_crop)
+                cv2.imwrite(self.save_detection_path+'frame/'+file_name.data, self.detected_image)
+
+                self.detection_saved_pub.publish(True)
+            except:
+                self.detection_saved_pub.publish(False)
+        else:
+            print("no rects detecteed")
+            self.detection_saved_pub.publish(False)
+                
+
+    def crop_rect(self, img, rect):
+        # get the parameter of the small rectangle
+        center, size, angle = rect[0], rect[1], rect[2]
+        center, size = tuple(map(int, center)), tuple(map(int, size))
+
+        # get row and col num in img
+        height, width = img.shape[0], img.shape[1]
+
+        # calculate the rotation matrix
+        M = cv2.getRotationMatrix2D(center, angle, 1)
+        # rotate the original image
+        img_rot = cv2.warpAffine(img, M, (width, height))
+
+        # now rotated rectangle becomes vertical and we crop it
+        img_crop = cv2.getRectSubPix(img_rot, size, center)
+
+        return img_crop, img_rot
 
     def update(self, image,show=True):
 
@@ -70,7 +124,8 @@ class rectangle_detector(object):
             # print("---")
             # print(poligons[0])
             ((x,y), radius) = cv2.minEnclosingCircle(poligons[0])
-            
+            rect = cv2.minAreaRect(poligons[0])
+
             if show and radius > 10:
                 # draw the circle and centroid on the frame,
                 # then update the list of tracked points
@@ -89,9 +144,9 @@ class rectangle_detector(object):
             # rects = cv2.minAreaRect(cnts[0])
             # print(rects)
             # return None, None
-            return (x,y),radius
+            return (x,y),radius, rect
         else:
-            return None, None
+            return None, None, None
             
     def filter_cnts(self, cnts_raw):
         cnts = []
@@ -183,14 +238,16 @@ class rectangle_detector(object):
                 (rows, cols, channels) = cv_image.shape
                 if not (cols > 60 and rows > 60):  # returns if data have unvalid shape
                     continue
-               
-                center, radius = self.update(cv_image)
+                
+                self.image = cv_image.copy()
+                center, radius, rect = self.update(cv_image)
+                self.detected_image = cv_image
+                self.rect = rect
                 # print("fps: " +str(1/(time.time() - self.t_0)))
                 # self.t_0 = time.time()
                 # print("radius: "+str(radius))
                 if not center is None:
                     
-                    # img_crop, img_rot = self.crop_rect(cv_image,rect)
                     p = Point()
                     (p.x, p.y) = center
                     p.z = radius

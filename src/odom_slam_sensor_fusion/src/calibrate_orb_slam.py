@@ -39,7 +39,9 @@ def slam_pose_callback(pose):
         count_callbacks =0
         print (".")
         if map_name in calibration_data.keys() and len(calibration_data[map_name])>2:
+            
             new_pose = np.dot(np.array(calibration_data[map_name]["pose_correction_matrix"]),slam_pose)
+            new_pose = new_pose*calibration_data[map_name]["scale_factor_matrix"]
             print(ros_numpy.msgify(Pose,new_pose))
         
             
@@ -63,6 +65,7 @@ def calculate_map_tf():
     for i in range(len(x)):
         for j in range(i+1,len(x)):
             print(i,j)
+            
             total_dist_slam += np.sqrt(np.dot(x[i,:3,3]-x[j,:3,3],x[i,:3,3]-x[j,:3,3]))
             total_dist_final += np.sqrt(np.dot(y[i,:3,3]-y[j,:3,3],y[i,:3,3]-y[j,:3,3]))
             c +=1
@@ -76,13 +79,16 @@ def calculate_map_tf():
     sf_i *= scale_factor
     sf_i[3,3] = 1
 
-    print(sf_i)
+    sfM = np.ones([4,4])
+    sfM[:3,3] = scale_factor
+
 
     #yeah... i know that this is not the best solution, but it is working, and for now it is all that matters
     # tfM = np.dot(np.dot(np.linalg.inv(y[0]*sf_m),x[0]),sf_i)
 
-    tfM = np.dot(np.dot(np.linalg.inv(np.dot(sf_i,x[0])),y[0]),sf_i*sf_i)
-    return tfM
+    tfM = np.dot(np.dot(np.linalg.inv(np.dot(sf_i,x[0])),y[0]),sf_i)
+
+    return tfM, sfM
 
 
     # reg = LinearRegression().fit(x, y)
@@ -130,7 +136,9 @@ while decision != 4 :
                         print("please record at least"+str(2-len(calibration_data[map_name]["final_poses"]))+"more position")
                     else:
                         print("calibrated")
-                        calibration_data[map_name]["pose_correction_matrix"] = calculate_map_tf().tolist()
+                        tfM, sfM = calculate_map_tf()
+                        calibration_data[map_name]["pose_correction_matrix"] = tfM.tolist()
+                        calibration_data[map_name]["scale_factor_matrix"] = sfM.tolist()
                 else:
                     calibration_data[map_name]= {"slam_poses":[slam_pose.tolist()],"final_poses":[ros_numpy.numpify(given_pose).tolist()]}
                     print("please record at least"+str(2-len(calibration_data[map_name]["final_poses"]))+"more position")

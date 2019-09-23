@@ -1,6 +1,6 @@
 <launch>
-  <arg name="map_file" default="test_map.bin"/>
-  <arg name="load_map" default="false"/>
+  <arg name="map_file" default="citi.bin"/>
+  <arg name="load_map" default="true"/>
   <node name="orb_slam2_mono" pkg="orb_slam2_ros"
       type="orb_slam2_ros_mono" output="screen">
 

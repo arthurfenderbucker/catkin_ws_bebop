@@ -25,30 +25,25 @@ def main():
     with sm:
 
         # Add states to the container
+                               
         smach.StateMachine.add('takeoff', takeoff(),
-                               transitions={'done': 'flag',
+                               transitions={'done': 'pass_through_shelf',
                                             'error': 'land_now'})
 
         smach.StateMachine.add('land_now', land_now(),
                                transitions={'done': 'finished'})
 
-        flag_subsm = smach.StateMachine(outcomes=['success', 'error'])
-        with flag_subsm:
+        smach.StateMachine.add('capture_flag', capture_flag(),
+                               transitions={'done': 'face_shelf'})
 
-            smach.StateMachine.add('align_flag', align_flag(),
-                                   transitions={'flag_aligned': 'success',
-                                                'reference_lost': 'change_view',
-                                                'too_many_attempts': 'error'})
+        smach.StateMachine.add('align_window', align_window(),
+                               transitions={'done': 'land_now'})
 
-            smach.StateMachine.add('change_view', change_view_flag(),
-                                   transitions={'done': 'align_flag'})
-
-        smach.StateMachine.add('flag', flag_subsm,
-                               transitions={'success': 'drop_box',
-                                            'error': 'land_now'})
-
+        smach.StateMachine.add('pass_through_shelf', pass_through_shelf(),
+                               transitions={'done': 'land_now'})
+                               
         smach.StateMachine.add('face_shelf', face_shelf(),
-                               transitions={'done': 'move_to_shelf'}) #goes to the side of the shelf 
+                               transitions={'done': 'land_now'}) #goes to the side of the shelf 
 
 
         move_to_shelf_subsm = smach.StateMachine(outcomes=['success', 'error'])
@@ -87,6 +82,20 @@ def main():
                                             'error': 'land_now'})
 
 
+        flag_subsm = smach.StateMachine(outcomes=['success', 'error'])
+        with flag_subsm:
+
+            smach.StateMachine.add('align_flag', align_flag(),
+                                   transitions={'flag_aligned': 'success',
+                                                'reference_lost': 'change_view',
+                                                'too_many_attempts': 'error'})
+
+            smach.StateMachine.add('change_view', change_view_flag(),
+                                   transitions={'done': 'align_flag'})
+
+        smach.StateMachine.add('flag', flag_subsm,
+                               transitions={'success': 'face_shelf',
+                                            'error': 'land_now'})
 
         smach.StateMachine.add('drop_box', drop_box(),
                                transitions={'done': 'flag'})
