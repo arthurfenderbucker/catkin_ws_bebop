@@ -189,14 +189,14 @@ class color_range():
             
             # show the frame to our screen
         
-            if show :
-                cv2.imshow("Original", image)
-                cv2.imshow("Thresh", thresh)
-                # cv2.imshow("Mask", mask)
+                if show :
+                    cv2.imshow("Original", image)
+                    cv2.imshow("Thresh", thresh)
+                    # cv2.imshow("Mask", mask)
             return [center,radius,rect]
-        if show :
-            cv2.imshow("Original", image)
-            cv2.imshow("Thresh", thresh)
+        # if show :
+        #     cv2.imshow("Original", image)
+        #     cv2.imshow("Thresh", thresh)
             # cv2.imshow("Mask", mask)
         return [None, None, None]
 
