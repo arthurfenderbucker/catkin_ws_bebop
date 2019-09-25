@@ -2,7 +2,7 @@
 import rospy
 import numpy as np
 import math
-from sklearn.linear_model import LinearRegression
+
 
 from geometry_msgs.msg import PoseStamped, TwistStamped, Twist, Point, Pose
 from nav_msgs.msg import Odometry
@@ -21,7 +21,7 @@ import time
 
 rospack = rospkg.RosPack()
 class odom_slam_sf(object): # visual odometry drone controler
-    
+
     current_coord = np.array([0.0,0.0,0.0])
 
     current_pose = Pose()
@@ -31,7 +31,7 @@ class odom_slam_sf(object): # visual odometry drone controler
     odom_pose_correction = np.eye(4)
     odom_pose_raw_np = np.eye(4)
     odom_pose = None
-    last_slam_time = 0 
+    last_slam_time = 0
 
     def __init__(self):
 
@@ -43,8 +43,8 @@ class odom_slam_sf(object): # visual odometry drone controler
         self.slam_pose_topic = rospy.get_param('~slam_pose_topic','/orb_slam2_mono/pose')
         config_path = rospy.get_param('~config_path',str(rospack.get_path('odom_slam_sensor_fusion')+'/config/maps/recorded_maps.json'))
         map_name = rospy.get_param('~map_name',"default")
-        
-       
+
+
         try:
             with open(config_path, 'r') as json_data_file:
                 calibration_file_data = json.load(json_data_file)
@@ -53,7 +53,7 @@ class odom_slam_sf(object): # visual odometry drone controler
 
         if map_name in calibration_file_data.keys():
             calibration_data = calibration_file_data[map_name]
-            
+
             self.slam_pose_correction = np.array(calibration_data["pose_correction_matrix"])
             self.scale_factor_matrix = np.array(calibration_data["scale_factor_matrix"])
             rospy.loginfo("calibration loaded")
@@ -79,22 +79,22 @@ class odom_slam_sf(object): # visual odometry drone controler
     # ------------ topics callbacks -----------
     def odometry_callback(self, odom):
 
-        
+
         self.odom_pose = odom.pose.pose
         self.odom_pose_raw_np = ros_numpy.numpify(odom.pose.pose)
-        
+
         self.current_pose_np = np.dot(self.odom_pose_raw_np, self.odom_pose_correction)
         self.current_pose = ros_numpy.msgify(Pose, self.current_pose_np)
         self.odom_pose_pub.publish(self.current_pose)
-        
+
 
     def slam_callback(self,pose):
         self.slam_pose_raw = ros_numpy.numpify(pose.pose) #homogeneous transformation matrix from the origin
-        
+
         self.slam_pose = np.dot(self.slam_pose_correction, self.slam_pose_raw)
         self.slam_pose = self.slam_pose*self.scale_factor_matrix
 
-        self.last_slam_time=time.time()        
+        self.last_slam_time=time.time()
         if not self.odom_pose == None:
             #calculates the transfor matrix for the odom position to the modified slam coords system (assumed as true value)
             self.odom_pose_correction = np.dot(np.linalg.inv(self.odom_pose_raw_np),self.slam_pose)

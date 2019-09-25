@@ -11,7 +11,7 @@ from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Point
 import rospkg
 import ros_numpy
-from sklearn.linear_model import LinearRegression
+
 
 import rospkg
 import tf
@@ -90,9 +90,6 @@ def calculate_map_tf():
 
     return tfM, sfM
 
-
-    # reg = LinearRegression().fit(x, y)
-    # return np.hstack([reg.coef_,np.expand_dims(reg.intercept_,axis=1)])
 
 while decision != 4 :
     print("Selected map: "+map_name)

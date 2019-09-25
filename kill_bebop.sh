@@ -8,11 +8,11 @@
 echo [ $1 = 'land' ] 
 if [ $1 = 'land' ] ; then
     echo "land"
-    touch /home/arthur/catkin_ws_bebop/land_bebop.txt
+    touch /home/jose/catkin_ws_bebop/land_bebop.txt
     sleep 0.01
-    rm /home/arthur/catkin_ws_bebop/land_bebop.txt
+    rm /home/jose/catkin_ws_bebop/land_bebop.txt
 else
-    touch /home/arthur/catkin_ws_bebop/kill_bebop.txt
+    touch /home/jose/catkin_ws_bebop/kill_bebop.txt
     sleep 0.01
-    rm /home/arthur/catkin_ws_bebop/kill_bebop.txt
+    rm /home/jose/catkin_ws_bebop/kill_bebop.txt
 fi
