@@ -178,7 +178,7 @@ class face_flag(smach.State):
         else:
             routine_name = 'flag3'
         print(routine_name)
-        
+
         if routine_name in moving_routines.keys():
             new_pose = ros_numpy.msgify(Pose,np.array(moving_routines[routine_name][0]))
             print(new_pose)
@@ -211,7 +211,7 @@ class change_view_flag (smach.State):
 
 class capture_flag (smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['done'])
+        smach.State.__init__(self, outcomes=['done','error'])
 
         self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_runnig_state", Bool,queue_size=1)
         self.save_detection_pub = rospy.Publisher("cv_detection/rectangle_detector/save_detection", String, queue_size=1)
@@ -228,6 +228,8 @@ class capture_flag (smach.State):
             except:
                 count_erros += 1
                 print(count_erros)
+                if count_erros >10:
+                    return 'error'
         self.running_rect_pub.publish(False)
         return 'done'
 
@@ -246,7 +248,7 @@ class face_shelf (smach.State):
 
         self.running_control_pub.publish(True)
         # self.pose_pub.publish()
-        routine_name = 'rosana'
+        routine_name = 'shelf'
 
         if routine_name in moving_routines:
             for position in moving_routines[routine_name]:

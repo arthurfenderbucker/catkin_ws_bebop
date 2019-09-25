@@ -4,7 +4,7 @@
   <node name="control" pkg="drone_control"
       type="control.py" output="screen">
        
-       <param name="calibrate_pid" type="bool" value="true" />
+       <param name="calibrate_pid" type="bool" value="false" />
        <param name="running" type="bool" value="false" />
        <!-- <param name="X" value="/P_x,std_msgs/Float64,publishedTopic" /> -->
        <!-- <param name="settings_file" type="string" value="$(drone_control)/config/bebop2_config.yaml" /> -->

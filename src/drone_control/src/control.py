@@ -30,14 +30,14 @@ class vso_controler(object): # visual odometry drone controler
 
     pid_x = PID(P=0.05,I=0.0000,D=0.035)
     pid_y = PID(P=0.05,I=0.0000,D=0.035)
-    pid_z = PID(P=0.2,I=0.00001,D=0.0024)
-    pid_ang = PID(P=0.066,I=0.0,D=0.0)
+    pid_z = PID(P=0.18,I=0.00001,D=0.0012)
+    pid_ang = PID(P=0.068,I=0.0,D=0.003)
 
     camera_angle = Twist()
     setted_vel = Twist()
 
     control_mode = "position" # position or velocity  
-    precision = np.array([0.15,0.15,0.05,0.1])
+    precision = np.array([0.15,0.15,0.1,0.1])
     count_aligned = 0
     def __init__(self):
 
