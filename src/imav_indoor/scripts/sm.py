@@ -26,7 +26,7 @@ def main():
 
         # Add states to the container
         smach.StateMachine.add('takeoff', takeoff(),
-                               transitions={'done': 'flag',
+                               transitions={'done': 'capture_flag',
                                             'error': 'land_now'})
 
         flag_subsm = smach.StateMachine(outcomes=['success', 'error'])
@@ -53,7 +53,8 @@ def main():
                                transitions={'done': 'land_now'})
                                
         smach.StateMachine.add('capture_flag', capture_flag(),
-                               transitions={'done': 'face_shelf'})
+                               transitions={'done': 'face_shelf',
+                                            'error': 'face_shelf'})
 
         smach.StateMachine.add('align_window', align_window(),
                                transitions={'done': 'pass_through_shelf'})
