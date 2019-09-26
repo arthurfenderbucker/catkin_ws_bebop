@@ -32,7 +32,7 @@ class takeoff(smach.State):
         smach.State.__init__(self, outcomes=['done', 'error'])    
         self.takeoff_topic = rospy.Publisher("/bebop/takeoff", Empty, queue_size=1)
         self.camera_angle_pub = rospy.Publisher("/bebop/camera_control", Twist, queue_size=1)
-        self.running_aligned_pub = rospy.Publisher("/control/align_reference/set_runnig_state", Bool, queue_size=1)
+        self.running_aligned_pub = rospy.Publisher("/control/align_reference/set_running_state", Bool, queue_size=1)
         self.angle_msg = Twist()
         self.angle_msg.angular.y = 3
         self.z = 0
@@ -81,8 +81,8 @@ class align_flag(smach.State):
         smach.State.__init__(self, outcomes=['flag_aligned','reference_lost', 'too_many_attempts'])
         self.camera_topic = rospy.Publisher("/bebop/camera_control", Twist, queue_size=1)
 
-        self.running_feature_pub= rospy.Publisher("cv_detection/feature_detector/set_runnig_state", Bool, queue_size=1)
-        self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_runnig_state", Bool,queue_size=1)
+        self.running_feature_pub= rospy.Publisher("cv_detection/feature_detector/set_running_state", Bool, queue_size=1)
+        self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_running_state", Bool,queue_size=1)
         self.ref_image_pub= rospy.Publisher("cv_detection/feature_detector/set_ref_image", String,queue_size=1)
 
         self.camera_angle_pub= rospy.Publisher("/control/align_reference/set_camera_angle", Float32,queue_size=1)
@@ -90,7 +90,7 @@ class align_flag(smach.State):
         self.precision_pub= rospy.Publisher("/control/align_reference/set_precision", Point,queue_size=1)
         self.pid_config_pub= rospy.Publisher("/control/align_reference/set_pid_config", String,queue_size=1)
         self.goal_point_pub = rospy.Publisher("/control/align_reference/set_goal_point", Point, queue_size=1)
-        self.running_aligned_pub = rospy.Publisher("/control/align_reference/set_runnig_state", Bool, queue_size=1)
+        self.running_aligned_pub = rospy.Publisher("/control/align_reference/set_running_state", Bool, queue_size=1)
         
     def execute(self, userdata):
         # rospy.sleep(3)
@@ -133,11 +133,11 @@ class face_flag(smach.State):
         smach.State.__init__(self, outcomes=['done', 'error'])
         self.camera_topic = rospy.Publisher("/bebop/camera_control", Twist, queue_size=1)
 
-        self.running_feature_pub= rospy.Publisher("cv_detection/feature_detector/set_runnig_state", Bool, queue_size=1)
+        self.running_feature_pub= rospy.Publisher("cv_detection/feature_detector/set_running_state", Bool, queue_size=1)
         self.ref_image_pub= rospy.Publisher("cv_detection/feature_detector/set_ref_image", String,queue_size=1)
 
         self.pose_pub = rospy.Publisher("/control/position", Pose, queue_size=1)
-        self.running_control_pub = rospy.Publisher("/control/set_runnig_state", Bool, queue_size=1)
+        self.running_control_pub = rospy.Publisher("/control/set_running_state", Bool, queue_size=1)
         
     def execute(self, userdata):
         # rospy.sleep(3)
@@ -213,7 +213,7 @@ class capture_flag (smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['done','error'])
 
-        self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_runnig_state", Bool,queue_size=1)
+        self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_running_state", Bool,queue_size=1)
         self.save_detection_pub = rospy.Publisher("cv_detection/rectangle_detector/save_detection", String, queue_size=1)
 
     def execute(self, userdata):
@@ -240,7 +240,7 @@ class face_shelf (smach.State):
         smach.State.__init__(self, outcomes=['done'])
 
         self.pose_pub = rospy.Publisher("/control/position", Pose, queue_size=1)
-        self.running_control_pub = rospy.Publisher("/control/set_runnig_state", Bool, queue_size=1)
+        self.running_control_pub = rospy.Publisher("/control/set_running_state", Bool, queue_size=1)
         # self.running_control_pub = rospy.Publisher("/control/aligned", Bool, queue_size=1)
 
 
@@ -272,11 +272,11 @@ class align_window(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['done'])
 
-        # self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_runnig_state", Bool,queue_size=1)
-        self.running_color_pub= rospy.Publisher("cv_detection/color_range/set_runnig_state", Bool, queue_size=1)
+        # self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_running_state", Bool,queue_size=1)
+        self.running_color_pub= rospy.Publisher("cv_detection/color_range/set_running_state", Bool, queue_size=1)
         self.color_pub= rospy.Publisher("cv_detection/color_range/set_color", String,queue_size=1)
         self.goal_point_pub = rospy.Publisher("/control/align_reference/set_goal_point", Point, queue_size=1)
-        self.running_aligned_pub = rospy.Publisher("/control/align_reference/set_runnig_state", Bool, queue_size=1)
+        self.running_aligned_pub = rospy.Publisher("/control/align_reference/set_running_state", Bool, queue_size=1)
         
     #     self.aligned_sub = rospy.Subscriber("/control/align_reference/aligned", Bool, self.aligned_callback, queue_size=1)
 
@@ -309,7 +309,7 @@ class pass_through_shelf(smach.State):
 
         self.pose_pub = rospy.Publisher("/control/position", Pose, queue_size=1)
         self.relative_pose_pub = rospy.Publisher("/control/position_relative", Pose, queue_size=1)
-        self.running_control_pub = rospy.Publisher("/control/set_runnig_state", Bool, queue_size=1)
+        self.running_control_pub = rospy.Publisher("/control/set_running_state", Bool, queue_size=1)
         # self.running_control_pub = rospy.Publisher("/control/aligned", Bool, queue_size=1)
 
 
@@ -361,9 +361,9 @@ class face_box(smach.State):
         smach.State.__init__(self, outcomes=['done'])
         self.camera_topic = rospy.Publisher("/bebop/camera_control", Twist, queue_size=1)
 
-        # self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_runnig_state", Bool,queue_size=1)
+        # self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_running_state", Bool,queue_size=1)
         
-        self.running_color_pub= rospy.Publisher("cv_detection/color_range/set_runnig_state", Bool, queue_size=1)
+        self.running_color_pub= rospy.Publisher("cv_detection/color_range/set_running_state", Bool, queue_size=1)
         self.color_pub= rospy.Publisher("cv_detection/color_range/set_color", String,queue_size=1)
         self.camera_angle_pub= rospy.Publisher("/control/align_reference/set_camera_angle", Float32,queue_size=1)
         self.speed_pub= rospy.Publisher("control/align_reference/set_speed", Float32,queue_size=1)
@@ -371,7 +371,7 @@ class face_box(smach.State):
         self.precision_pub= rospy.Publisher("/control/align_reference/set_precision", Point,queue_size=1)
         self.pid_config_pub= rospy.Publisher("/control/align_reference/set_pid_config", String,queue_size=1)
         self.goal_point_pub = rospy.Publisher("/control/align_reference/set_goal_point", Point, queue_size=1)
-        self.running_aligned_pub = rospy.Publisher("/control/align_reference/set_runnig_state", Bool, queue_size=1)
+        self.running_aligned_pub = rospy.Publisher("/control/align_reference/set_running_state", Bool, queue_size=1)
         
     def execute(self, userdata):
 
@@ -416,15 +416,64 @@ class pickup_box(smach.State):
         self.pickup_box_pub.publish(Empty())
         rospy.sleep(0.25)
         return 'done'
+
 # ====================== QR code =================
-class zigzag_qr_code(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['done','reference_lost'])
+class inventory(smach.State):
+    def __init__(self,shelf = 1):
+        smach.State.__init__(self, outcomes=['done','error'])
+
+        self.pose_pub = rospy.Publisher("/control/position", Pose, queue_size=1)
+        self.running_control_pub = rospy.Publisher("/control/set_running_state", Bool, queue_size=1)
+        self.running_inventory_pub= rospy.Publisher(
+            "cv_detection/inventory/set_runnig_state", Bool, queue_size=1)
+        self.read_tag_pub= rospy.Publisher(
+            "cv_detection/inventory/read_tag", Empty, queue_size=1)
+        self.stop_reading_qr_pub= rospy.Publisher(
+            "cv_detection/inventory/stop_reading_qr", Empty, queue_size=1)
+        
+        self.shelf = shelf
+
 
     def execute(self, userdata):
 
-        rospy.sleep(1)
-        return 'done'
+        self.running_inventory_pub.publish(True)
+        self.running_control_pub.publish(True)
+        # self.pose_pub.publish()
+        routine_name = 'qr_'+str(self.shelf)
+
+        if routine_name in moving_routines:
+            for i, position in enumerate(moving_routines[routine_name]):
+                print("------------- pose ----------")
+
+                if(i%2==0):
+                    self.stop_reading_qr_pub.publish(Empty())                        
+                    print("tag")
+                else:
+                    print("qr")
+                    
+                new_pose = ros_numpy.msgify(Pose,np.array(position))
+                print(new_pose)
+                self.pose_pub.publish(new_pose)
+                rospy.wait_for_message("/control/aligned", Bool)
+                
+                if(i%2==0):
+                    self.read_tag_pub.publish(Empty())
+                    rospy.sleep(1)
+
+            
+
+            self.stop_reading_qr_pub.publish(Empty())            
+            self.running_inventory_pub.publish(False)            
+            self.running_control_pub.publish(False)
+            return 'done'
+        else:
+            print("no routine named: "+routine_name)
+            print(moving_routines)
+            
+        self.stop_reading_qr_pub.publish(Empty())
+        self.running_control_pub.publish(False)
+        self.running_inventory_pub.publish(False)
+        return 'error'
 
 
 class change_view_qr_code(smach.State):
@@ -437,53 +486,7 @@ class change_view_qr_code(smach.State):
         return 'done'
 
 
-class align_box(smach.State):
-    def __init__(self):
-        smach.State.__init__(
-            self, outcomes=['done', 'erro'])
-        self.c = color_detection("red")
-    def execute(self, userdata):
 
-
-        return 'done'
-
-
-
-class square(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['done', 'erro'])
-
-        self.move_topic = rospy.Publisher(
-            "/bebop/cmd_vel", Twist, queue_size=1)
-
-    def control(self, x, y, z):
-        twist = Twist()
-        speed = 4
-        twist.linear.x = x * speed
-        twist.linear.y = y * speed
-        twist.linear.z = z * speed
-        twist.angular.x = 0
-        twist.angular.y = 0
-        twist.angular.z = 0
-        for i in range(20):
-            self.move_topic.publish(twist)
-            rospy.sleep(0.01)
-
-    def execute(self, userdata):
-        rospy.loginfo('Square')
-        self.control(1, 0, 1)
-        rospy.sleep(6)
-        self.control(2, 0, 0)
-        rospy.sleep(3)
-        self.control(1, 1, 0)
-        rospy.sleep(3)
-        self.control(-1, 0, 0)
-        rospy.sleep(3)
-        self.control(1, -1, 0)
-        rospy.sleep(3)
-        self.control(1, 0, 0)
-        self.condition = ""
-        return 'done'
 
 class drop_box(smach.State):
     def __init__(self):
@@ -511,8 +514,8 @@ class face_recharge_station(smach.State):
         smach.State.__init__(self, outcomes=['done'])
         self.camera_topic = rospy.Publisher("/bebop/camera_control", Twist, queue_size=1)
 
-        # self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_runnig_state", Bool,queue_size=1)
-        self.running_pub= rospy.Publisher("cv_detection/feature_detector/set_runnig_state", Bool, queue_size=1)
+        # self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_running_state", Bool,queue_size=1)
+        self.running_pub= rospy.Publisher("cv_detection/feature_detector/set_running_state", Bool, queue_size=1)
         self.ref_image_pub= rospy.Publisher("cv_detection/feature_detector/set_ref_image", String,queue_size=1)
 
         self.camera_angle_pub= rospy.Publisher("control/feature_detector/set_camera_angle", Float32,queue_size=1)
@@ -520,7 +523,7 @@ class face_recharge_station(smach.State):
         self.speed_pub= rospy.Publisher("control/align_reference/set_speed", Float32,queue_size=1)
         self.pid_config_pub= rospy.Publisher("/control/align_reference/set_pid_config", String,queue_size=1)
         self.goal_point_pub = rospy.Publisher("/control/align_reference/set_goal_point", Point, queue_size=1)
-        self.running_aligned_pub = rospy.Publisher("/control/align_reference/set_runnig_state", Bool, queue_size=1)
+        self.running_aligned_pub = rospy.Publisher("/control/align_reference/set_running_state", Bool, queue_size=1)
         
     def execute(self, userdata):
         # rospy.sleep(3)
@@ -556,102 +559,3 @@ class face_recharge_station(smach.State):
 
 
 # define state find_window
-
-# class follow(smach.State):
-#     def __init__(self):
-#         smach.State.__init__(
-#             self, outcomes=['done', 'erro'])
-#         rospy.Subscriber("/state_machine/follow/find_condition",
-#                          String, self.callback)
-#         self.condition = ""
-
-#     def callback(self, data):
-#         print(data)
-#         self.condition = data.data
-
-#     def execute(self, userdata):
-#         rospy.loginfo('Executing state find window')
-#         pub_state.publish("follow")
-#         while self.condition != "ok" and not rospy.is_shutdown():
-#             pass
-#         self.condition = ""
-#         return 'done'
-
-
-# class find_window(smach.State):
-#     def __init__(self):
-#         smach.State.__init__(
-#             self, outcomes=['window found', 'not on view', 'too many attempts'])
-#         rospy.Subscriber("/state_machine/window/find_condition",
-#                          String, self.callback)
-#         self.condition = ""
-
-#     def callback(self, data):
-#         print(data)
-#         self.condition = data.data
-
-#     def execute(self, userdata):
-#         rospy.loginfo('Executing state find window')
-#         pub_state.publish("find_window")
-#         while self.condition != "ok" and not rospy.is_shutdown():
-#             pass
-#         self.condition = ""
-#         return 'window found'
-
-# # define state change_view
-
-
-# class change_view(smach.State):
-#     def __init__(self):
-#         smach.State.__init__(self, outcomes=['view_changed'])
-
-#     def execute(self, userdata):
-#         rospy.loginfo('Executing state find window')
-
-#         return 'view_changed'
-
-# # define state through_window_state
-
-
-# class through_window_state(smach.State):
-#     def __init__(self):
-#         smach.State.__init__(self, outcomes=['completed window'])
-#         rospy.Subscriber("/state_machine/window/through_condition",
-#                          String, self.callback)
-#         self.condition = ""
-
-#     def callback(self, data):
-#         print(data)
-#         self.condition = data.data
-
-#     def execute(self, userdata):
-#         rospy.loginfo('Executing state through window')
-#         pub_state.publish("through_window")
-#         while self.condition != "ok" and not rospy.is_shutdown():
-#             pass
-#         self.condition = ""
-#         # pub_state.publish("")
-#         return 'completed window'
-
-# # define state rope
-
-
-# class find_rope(smach.State):
-#     def __init__(self):
-#         smach.State.__init__(self, outcomes=['rope_found'])
-#         rospy.Subscriber("/state_machine/rope/find_condition",
-#                          String, self.callback)
-#         self.condition = ""
-
-#     def callback(self, data):
-#         print(data)
-#         self.condition = data.data
-
-#     def execute(self, userdata):
-#         rospy.loginfo('Executing state find_rope')
-#         pub_state.publish("find_rope")
-#         while self.condition != "ok" and not rospy.is_shutdown():
-#             pass
-#         self.condition = ""
-#         rospy.loginfo("exited find_rope")
-#         return 'rope_found'

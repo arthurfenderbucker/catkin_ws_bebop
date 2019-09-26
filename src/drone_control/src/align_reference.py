@@ -82,7 +82,7 @@ class adjust_position():
         rospy.Subscriber('/bebop/land', Empty, self.land,queue_size=10)
         rospy.Subscriber('/bebop/reset', Empty, self.land,queue_size=10)
         self.running_sub= rospy.Subscriber(
-            "control/align_reference/set_runnig_state", Bool, self.set_runninng_state, queue_size=1)
+            "control/align_reference/set_running_state", Bool, self.set_running_state, queue_size=1)
         
         self.setpoint_vel_pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size=1)
         self.aligned = rospy.Publisher(
@@ -137,7 +137,7 @@ class adjust_position():
         self.bool_align = False
         self.count_aligned = 0
 
-    def set_runninng_state(self,boolean_state):
+    def set_running_state(self,boolean_state):
         self.running = boolean_state.data
         self.reset_pid()
 

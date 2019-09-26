@@ -28,8 +28,8 @@ class vso_controler(object): # visual odometry drone controler
     positioning_vel = np.array([0.0,0.0,0.0,0.0])
 
 
-    pid_x = PID(P=0.05,I=0.0000,D=0.035)
-    pid_y = PID(P=0.05,I=0.0000,D=0.035)
+    pid_x = PID(P=0.05,I=0.0000,D=0.13)
+    pid_y = PID(P=0.05,I=0.0000,D=0.13)
     pid_z = PID(P=0.18,I=0.00001,D=0.0012)
     pid_ang = PID(P=0.068,I=0.0,D=0.003)
 
@@ -73,7 +73,7 @@ class vso_controler(object): # visual odometry drone controler
         rospy.Service('/control/calibrate_pid', SetBool, self.set_calibrate_pid)
 
         self.running_sub = rospy.Subscriber(
-            "control/set_runnig_state", Bool, self.set_runninng_state, queue_size=1)
+            "control/set_running_state", Bool, self.set_running_state, queue_size=1)
         self.current_pose_pub = rospy.Publisher(
             "control/current_position", Pose, queue_size=1)
         self.aligned = rospy.Publisher(
@@ -94,7 +94,7 @@ class vso_controler(object): # visual odometry drone controler
     # ------------ topics callbacks -----------
     def set_precision(self,data):
         self.precision = np.array([data.x,data.y,data.z,self.precision[3]])
-    def set_runninng_state(self,boolean_state):
+    def set_running_state(self,boolean_state):
         self.running = boolean_state.data
         self.reset_pid()
 
@@ -150,7 +150,7 @@ class vso_controler(object): # visual odometry drone controler
 
     def current_pose_callback(self, current_pose):
         self.current_pose = current_pose
-        
+
         self.current_pose_np = ros_numpy.numpify(current_pose)
         self.current_z_ang = self.euler_from_pose(current_pose)[2]
         self.positioning_vel = self.calculate_vel(self.current_pose)       
@@ -212,6 +212,13 @@ class vso_controler(object): # visual odometry drone controler
 
     def calculate_vel(self,pose):
         v_x_raw, v_y_raw, v_z, v_ang = self.pid_update(pose)
+        ang_vel_z = self.positioning_vel[3] #angular vel on z
+        # delta_x = (-v_y_raw*ang_vel_z)
+        # delta_y = (v_x_raw*ang_vel_z)
+        # print(delta_x)
+        # print(delta_y)
+        v_x_raw+=(-v_y_raw*ang_vel_z)
+        v_y_raw+=(v_x_raw*ang_vel_z)
         ang_z = self.euler_from_pose(pose)[2]
         v_x = np.cos(ang_z)*v_x_raw+np.sin(ang_z)*v_y_raw
         v_y = np.cos(ang_z)*v_y_raw-np.sin(ang_z)*v_x_raw

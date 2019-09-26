@@ -72,7 +72,7 @@ class vso_controler(object): # visual odometry drone controler
         rospy.Service('/control/reset_vso_coords', Trigger , self.reset_vso_position_service)
 
         self.running_sub = rospy.Subscriber(
-            "control/set_runnig_state", Bool, self.set_runninng_state, queue_size=1)
+            "control/set_running_state", Bool, self.set_running_state, queue_size=1)
 
         self.current_pose_pub = rospy.Publisher(
             "control/current_position", Point, queue_size=1)
@@ -88,7 +88,7 @@ class vso_controler(object): # visual odometry drone controler
         self.pid_setpoint(self.goal_pose)
 
     # ------------ topics callbacks -----------
-    def set_runninng_state(self,boolean_state):
+    def set_running_state(self,boolean_state):
         self.running = boolean_state.data
 
     def land(self,callback_data):

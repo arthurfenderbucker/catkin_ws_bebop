@@ -20,6 +20,11 @@
         <param name="pub_topic" type="string" value="/control/align_reference/ref_point" />
         <param name="running" type="bool" value="false" />
     </node>
+    <node pkg="cv_detection" name="inventory" type="inventory.py" output="screen">
+        <param name="image_topic" type="string" value="/bebop/image_raw" />
+        <param name="pub_topic" type="string" value="/control/align_reference/ref_point" />
+        <param name="running" type="bool" value="false" />
+    </node>
 
     <node name="Kill_button" pkg="imav_indoor" type="kill_button.py" required="true" output="screen"/>
     

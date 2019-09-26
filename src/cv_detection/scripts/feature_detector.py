@@ -42,7 +42,7 @@ class feature_detector():
         self.pub_topic_sub = rospy.Subscriber(
             "cv_detection/feature_detector/set_pub_topic", String, self.set_pub_topic, queue_size=1)
         self.running_sub= rospy.Subscriber(
-            "cv_detection/feature_detector/set_runnig_state", Bool, self.set_runninng_state, queue_size=1)
+            "cv_detection/feature_detector/set_running_state", Bool, self.set_running_state, queue_size=1)
         self.ref_image_sub = rospy.Subscriber(
             "cv_detection/feature_detector/set_ref_image", String, self.set_ref_image, queue_size = 1)
 
@@ -69,7 +69,7 @@ class feature_detector():
         self.pub_topic = topic_name.data
         self.ref_pub = rospy.Publisher(self.pub_topic, Point, queue_size=1)
 
-    def set_runninng_state(self,boolean_state):
+    def set_running_state(self,boolean_state):
         self.running = boolean_state.data
         if not self.running:
             cv2.destroyAllWindows()

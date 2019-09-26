@@ -43,7 +43,7 @@ class rectangle_detector(object):
         self.pub_topic_sub = rospy.Subscriber(
             "cv_detection/rectangle_detector/set_pub_topic", String, self.set_pub_topic, queue_size=None)
         self.running_sub= rospy.Subscriber(
-            "cv_detection/rectangle_detector/set_runnig_state", Bool, self.set_runninng_state, queue_size=None)
+            "cv_detection/rectangle_detector/set_running_state", Bool, self.set_running_state, queue_size=None)
         
         self.save_detection_sub = rospy.Subscriber(
             "cv_detection/rectangle_detector/save_detection", String, self.save_detection, queue_size=None)
@@ -64,7 +64,7 @@ class rectangle_detector(object):
         self.pub_topic = topic_name.data
         self.ref_pub = rospy.Publisher(self.pub_topic, Point, queue_size=1)
 
-    def set_runninng_state(self,boolean_state):
+    def set_running_state(self,boolean_state):
         self.running = boolean_state.data
         if not self.running:
             cv2.destroyAllWindows()

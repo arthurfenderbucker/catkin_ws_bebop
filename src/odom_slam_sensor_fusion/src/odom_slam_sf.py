@@ -17,6 +17,7 @@ import rospkg
 import json
 
 import time
+import tf
 
 
 rospack = rospkg.RosPack()
@@ -91,20 +92,32 @@ class odom_slam_sf(object): # visual odometry drone controler
     def slam_callback(self,pose):
         self.slam_pose_raw = ros_numpy.numpify(pose.pose) #homogeneous transformation matrix from the origin
 
-        self.slam_pose = np.dot(self.slam_pose_correction, self.slam_pose_raw)
-        self.slam_pose = self.slam_pose*self.scale_factor_matrix
+        self.slam_pose_np = np.dot(self.slam_pose_correction, self.slam_pose_raw)
+        self.slam_pose_np = self.slam_pose_np*self.scale_factor_matrix
+
+        self.slam_pose = ros_numpy.msgify(Pose,self.slam_pose_np)
+
+        #bebop camera link correction and camera calibration correction
+        ang_z = self.euler_from_pose(self.slam_pose)[2]
+        self.slam_pose.position.x += -0.11*np.cos(ang_z)
+        self.slam_pose.position.y += -0.11*np.sin(ang_z)
+
+        self.slam_pose_np = ros_numpy.numpify(self.slam_pose)
 
         self.last_slam_time=time.time()
         if not self.odom_pose == None:
             #calculates the transfor matrix for the odom position to the modified slam coords system (assumed as true value)
-            self.odom_pose_correction = np.dot(np.linalg.inv(self.odom_pose_raw_np),self.slam_pose)
+            self.odom_pose_correction = np.dot(np.linalg.inv(self.odom_pose_raw_np),self.slam_pose_np)
         else:
             rospy.loginfo("Havent received any odom coord yet!")
-        self.current_pose = ros_numpy.msgify(Pose,self.slam_pose)
-        self.current_pose_np = self.slam_pose
+        self.current_pose = self.slam_pose
+        self.current_pose_np = self.slam_pose_np
+
 
     # ----------------------Sensor Fusion functions--------------------------
-
+    def euler_from_pose(self, pose):
+        quarterion = [pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w]
+        return tf.transformations.euler_from_quaternion(quarterion)
 
 
     def run(self):
