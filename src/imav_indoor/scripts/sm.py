@@ -26,11 +26,8 @@ def main():
 
         # Add states to the container
         smach.StateMachine.add('takeoff', takeoff(),
-                               transitions={'done': 'flag',
+                               transitions={'done': 'capture_flag',
                                             'error': 'land_now'})
-
-        smach.StateMachine.add('land_now', land_now(),
-                               transitions={'done': 'finished'})
 
         flag_subsm = smach.StateMachine(outcomes=['success', 'error'])
         with flag_subsm:
@@ -46,11 +43,40 @@ def main():
         smach.StateMachine.add('flag', flag_subsm,
                                transitions={'success': 'drop_box',
                                             'error': 'land_now'})
+        smach.StateMachine.add('land_now', land_now(),
+                               transitions={'done': 'finished'})
+
+        smach.StateMachine.add('face_box', face_box(),
+                               transitions={'done': 'pickup_box'})
+
+        smach.StateMachine.add('pickup_box', pickup_box(),
+                               transitions={'done': 'land_now'})
+                               
+        smach.StateMachine.add('capture_flag', capture_flag(),
+                               transitions={'done': 'face_shelf',
+                                            'error': 'face_shelf'})
+
+        smach.StateMachine.add('align_window', align_window(),
+                               transitions={'done': 'pass_through_shelf'})
+
+        smach.StateMachine.add('face_recharge_station', face_recharge_station(),
+                               transitions={'done': 'pickup_box'}) #goes to the side of the shelf 
+        smach.StateMachine.add('pass_through_shelf', pass_through_shelf(),
+                               transitions={'done': 'land_now'})
 
         smach.StateMachine.add('face_shelf', face_shelf(),
-                               transitions={'done': 'move_to_shelf'}) #goes to the side of the shelf 
+                               transitions={'done': 'land_now'}) #goes to the side of the shelf 
+        
+        smach.StateMachine.add('drop_box', drop_box(),
+                               transitions={'done': 'land_now'})
 
+        smach.StateMachine.add('inventory1', inventory(1),
+                               transitions={'done': 'land_now'})
+                               
+        smach.StateMachine.add('inventory2', inventory(2),
+                               transitions={'done': 'land_now'})
 
+        
         move_to_shelf_subsm = smach.StateMachine(outcomes=['success', 'error'])
         with move_to_shelf_subsm:
 
@@ -64,41 +90,13 @@ def main():
 
 
         smach.StateMachine.add('move_to_shelf', move_to_shelf_subsm ,
-                               transitions={'success': 'face_boxes',
-                                            'error': 'land_now'})
-
-        smach.StateMachine.add('face_boxes', face_boxes(),
-                               transitions={'done': 'read_qr_codes'})
-
-        read_qr_codes_subsm = smach.StateMachine(outcomes=['success', 'error'])
-        
-        with read_qr_codes_subsm:
-
-            smach.StateMachine.add('zigzag_qr_code', zigzag_qr_code(),
-                                   transitions={'done': 'success',
-                                                'reference_lost': 'change_view_qr_code'})
-
-            smach.StateMachine.add('change_view_qr_code', change_view_qr_code(),
-                                   transitions={'done': 'zigzag_qr_code'})
-
-
-        smach.StateMachine.add('read_qr_codes', read_qr_codes_subsm,
-                               transitions={'success': 'land_now',
+                               transitions={'success': 'face_box',
                                             'error': 'land_now'})
 
 
-
-        smach.StateMachine.add('drop_box', drop_box(),
-                               transitions={'done': 'flag'})
-
-
-        # smach.StateMachine.add('square', square(),
-        #                        transitions={'done': 'land_now', 'error': 'land_now'})
-
-        # smach.StateMachine.add('follow', follow(),
-        #                        transitions={'done': 'land_now', 'erro': 'land'})
-
-        
+        smach.StateMachine.add('qr_codes_routine', qr_codes_routine(),
+                                   transitions={'done': 'land_now',
+                                                'error':'land_now'})
 
         # Create the sub SMACH state machine
         # sm_sub = smach.StateMachine(outcomes=['no_window', 'yes_window'])

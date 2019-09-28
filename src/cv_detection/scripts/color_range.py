@@ -63,13 +63,14 @@ class color_range():
         self.pub_topic_sub = rospy.Subscriber(
             "cv_detection/color_range/set_pub_topic", String, self.set_pub_topic, queue_size=None)
         self.running_sub= rospy.Subscriber(
-            "cv_detection/color_range/set_runnig_state", Bool, self.set_runninng_state, queue_size=None)
+            "cv_detection/color_range/set_running_state", Bool, self.set_running_state, queue_size=None)
         self.color_sub = rospy.Subscriber(
             "cv_detection/color_range/set_color", String, self.set_color, queue_size=None)
         self.min_radius_sub = rospy.Subscriber(
             "cv_detection/color_range/set_min_radius", Int16, self.set_min_radius, queue_size=None)
 
         self.ref_pub = rospy.Publisher(self.pub_topic, Point, queue_size=1)
+        self.crop_pub = rospy.Publisher("cv_detection/color_range/detection", Image, queue_size=1)
     
     # ====================== callbacks ===========================
     def set_image_topic(self, topic_name):
@@ -79,7 +80,7 @@ class color_range():
         self.pub_topic = topic_name.data
         self.ref_pub = rospy.Publisher(self.pub_topic, Point, queue_size=1)
 
-    def set_runninng_state(self,boolean_state):
+    def set_running_state(self,boolean_state):
         self.running = boolean_state.data
         if not self.running:
             cv2.destroyAllWindows()
@@ -189,14 +190,14 @@ class color_range():
             
             # show the frame to our screen
         
-            if show :
-                cv2.imshow("Original", image)
-                cv2.imshow("Thresh", thresh)
-                # cv2.imshow("Mask", mask)
+                if show :
+                    cv2.imshow("Original", image)
+                    cv2.imshow("Thresh", thresh)
+                    # cv2.imshow("Mask", mask)
             return [center,radius,rect]
-        if show :
-            cv2.imshow("Original", image)
-            cv2.imshow("Thresh", thresh)
+        # if show :
+        #     cv2.imshow("Original", image)
+        #     cv2.imshow("Thresh", thresh)
             # cv2.imshow("Mask", mask)
         return [None, None, None]
 
@@ -255,6 +256,8 @@ class color_range():
                 if center != None:
                     
                     img_crop, img_rot = self.crop_rect(cv_image,rect)
+
+                    self.crop_pub.publish(bridge.cv2_to_imgmsg(img_crop, encoding="bgr8"))
                     p = Point()
                     p.x = center[0]
                     p.y = center[1]

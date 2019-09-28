@@ -1,4 +1,4 @@
-
+import time
 class PID:
 	"""
 	Discrete PID control
@@ -16,16 +16,17 @@ class PID:
 
 		self.set_point=0.0
 		self.error=0.0
-
+		self.last_t = time.time()
 	def update(self,current_value):
 		"""
 		Calculate PID output value for given reference input and feedback
 		"""
-
+		self.t = time.time()
 		self.error = self.set_point - current_value
 
+		dt = (self.t - self.last_t)
 		self.P_value = self.Kp * self.error
-		self.D_value = self.Kd * ( self.error - self.Derivator)
+		self.D_value = self.Kd * ( self.error - self.Derivator) / dt
 		self.Derivator = self.error
 
 		self.Integrator = self.Integrator + self.error
@@ -38,7 +39,8 @@ class PID:
 		self.I_value = self.Integrator * self.Ki
 
 		PID = self.P_value + self.I_value + self.D_value
-
+		self.last_t = self.t
+		
 		return PID
 
 	def setPoint(self,set_point):

@@ -1,0 +1,7 @@
+<launch>
+    <node pkg="cv_detection" name="rectangle_detection" type="rectangle_detector.py" output="screen">
+        <param name="image_topic" type="string" value="/bebop/image_raw" />
+        <param name="pub_topic" type="string" value="/control/align_reference/ref_point" />
+        <param name="running" type="bool" value="true"/>
+    </node>
+</launch>

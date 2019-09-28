@@ -2,8 +2,8 @@
 
 import rospy
 import json
-from geometry_msgs.msg import Point
-
+from geometry_msgs.msg import Pose
+import ros_numpy
 import rospkg
 
 
@@ -15,7 +15,6 @@ with open(positions_path, 'r') as json_data_file:
     try:
         positions_data = json.load(json_data_file)
     except:
-
         positions_data = {}
 
 decision = 0
@@ -23,10 +22,10 @@ pose = []
 
 def pose_callback(data):
     global pose
-    pose = [data.x,data.y,data.z]
+    pose = ros_numpy.numpify(data).tolist()
     
 rospy.init_node('position_recorder', anonymous=True)
-sub = rospy.Subscriber("/control/current_pose", Point, pose_callback, queue_size=1)
+sub = rospy.Subscriber("/odom_slam_sf/current_pose", Pose, pose_callback, queue_size=1)
 
 routine_name = "default"
 while decision != 2 :
