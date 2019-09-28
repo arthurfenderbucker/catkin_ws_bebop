@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 '''
 Code made for test commum state massages and validade the capability
 to cacht battery porcentage
@@ -20,17 +21,17 @@ def bat_state (bat):
     battery.percent = bat.percent
     print (battery.percent)
 
-rospy.init_node('Bebop_2_Battary_Porcentage')
+rospy.init_node('Bebop_2_Battery_Porcentage')
 print('node iniciado')
-rate = rospy.Rate(5)
+rate = rospy.Rate(1)
 print('rate definido')
 rospy.Subscriber('/bebop/states/common/CommonState/BatteryStateChanged', CommonCommonStateBatteryStateChanged, bat_state)
 print('subfeito')
 i = 0
 
 while i < 24:
+    print(" -------- Battery level --------- ")
     print (battery.percent)
-    #i = i + 1
     rate.sleep()
     try:
         rate.spin()

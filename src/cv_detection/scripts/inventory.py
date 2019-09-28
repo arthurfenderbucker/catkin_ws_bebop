@@ -76,7 +76,8 @@ class Inventory:
         img_crop = cv2.getRectSubPix(img_rot, size, center)
 
         (h, w) = img_crop.shape[:2]
-        if h>w:
+        if h>w: #if in the wrong orientation
+            #rotated 90 degrees 
             M = cv2.getRotationMatrix2D(center, 90, 1)
             img_crop = cv2.warpAffine(img_crop, M, (h, w)) 
 
@@ -85,7 +86,6 @@ class Inventory:
     def detect(self, image):
         rospy.loginfo("Detecting Alphanumeric Codes!")
         gray = cv2.cvtColor(image[20:-20,20:-20], cv2.COLOR_BGR2GRAY)
-        
         et, im_th = cv2.threshold(gray, 130, 255, cv2.THRESH_BINARY_INV)
         
         
@@ -180,11 +180,11 @@ class Inventory:
 
                 cropped_image,color_rect= self.get_rect(cv_image)
                 if not color_rect is None:
-                    (c_x,c_y),(c_w,c_h),ang = color_rect
+                    (color_rect_x,color_rect_y),(color_rect_w,color_rect_h),ang = color_rect
 
                     # check if the color is still in scene with the proper size
-                    if c_w > 30 and c_h > 20:
-                        tag_y = c_y
+                    if color_rect_w > 30 and color_rect_h > 20:
+                        tag_y = color_rect_y
                     else:
                         tag_y = cv_image.shape[0]
                 else:
@@ -230,25 +230,12 @@ class Inventory:
             k = cv2.waitKey(1)
             if k == 27 : break  #esc pressed
 
-#rate = rospy.Rate(20)
 def main():
-    # rospy.init_node('Inventory', anonymous=True)
-    # rate = rospy.Rate(20)
+
     print("inti ")
     detecter = Inventory()
     detecter.run()
 
-    #image_sub = rospy.Subscriber("/bebop/image_raw", Image, detecter.image_callback, queue_size=1)
-    # while not (cv2.waitKey(5) & 0xFF == ord('q')):
-    #     cv2.imshow("cv_image", detecter.cv_image)
-    #     # self.gray = self.cv_image
-    #     try:
-    #         if detecter.cropped_img.any():
-    #             detecter.detect()
-    #     except Exception as e:
-    #         pass
-    #     #cv2.imshow("Cropped image",detecter.cropped_img)
-    #     detecter.rate.sleep()
 
     cv2.destroyAllWindows()
 
