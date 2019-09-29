@@ -39,15 +39,18 @@ class rectangle_detector(object):
         self.running = rospy.get_param('~running',True)
 
         self.image_topic_sub = rospy.Subscriber(
-            "cv_detection/rectangle_detector/set_img_topic", String, self.set_image_topic, queue_size=None)
+            "cv_detection/rectangle_detector/set_img_topic", String, self.set_image_topic, queue_size=1)
         self.pub_topic_sub = rospy.Subscriber(
-            "cv_detection/rectangle_detector/set_pub_topic", String, self.set_pub_topic, queue_size=None)
+            "cv_detection/rectangle_detector/set_pub_topic", String, self.set_pub_topic, queue_size=1)
         self.running_sub= rospy.Subscriber(
-            "cv_detection/rectangle_detector/set_running_state", Bool, self.set_running_state, queue_size=None)
+            "cv_detection/rectangle_detector/set_running_state", Bool, self.set_running_state, queue_size=1)
         
         self.save_detection_sub = rospy.Subscriber(
-            "cv_detection/rectangle_detector/save_detection", String, self.save_detection, queue_size=None)
-
+            "cv_detection/rectangle_detector/save_detection", String, self.save_detection, queue_size=1)
+        
+        self.save_image_raw_sub = rospy.Subscriber(
+            "cv_detection/rectangle_detector/save_image_raw", String, self.save_image_raw, queue_size=1)
+        
         self.filter_rotation_sub = rospy.Subscriber(
             "cv_detection/rectangle_detector/set_filter_rotation", Bool, self.set_filter_rotation, queue_size=1)
 
@@ -71,6 +74,11 @@ class rectangle_detector(object):
     def set_filter_rotation(self,data):#Bool
         self.filter_rotation = data.data
 
+    def save_image_raw(self,file_name):
+        if not self.image is None:
+            cv2.imwrite(self.save_detection_path+'frame/'+file_name.data, self.image[100:-100,100:-100])                
+        else:
+            rospy.logerr("no image received  yet")
     def save_detection(self,file_name):
         
         if not self.rect == None:
@@ -153,7 +161,6 @@ class rectangle_detector(object):
     def run(self):
         while not rospy.is_shutdown():
             if self.running:
-                
                 data = rospy.wait_for_message(self.img_topic, Image)
                 try:
                     cv_image = bridge.imgmsg_to_cv2(data, "bgr8")

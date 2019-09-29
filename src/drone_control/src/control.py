@@ -28,8 +28,8 @@ class vso_controler(object): # visual odometry drone controler
     positioning_vel = np.array([0.0,0.0,0.0,0.0])
 
 
-    pid_x = PID(P=0.05,I=0.0000,D=0.13)
-    pid_y = PID(P=0.05,I=0.0000,D=0.13)
+    pid_x = PID(P=0.05,I=0.00000,D=0.13)
+    pid_y = PID(P=0.05,I=0.00000,D=0.13)
     pid_z = PID(P=0.18,I=0.00001,D=0.0012)
     pid_ang = PID(P=0.068,I=0.0,D=0.003)
 
@@ -217,8 +217,8 @@ class vso_controler(object): # visual odometry drone controler
         # delta_y = (v_x_raw*ang_vel_z)
         # print(delta_x)
         # print(delta_y)
-        v_x_raw+=(-v_y_raw*ang_vel_z)
-        v_y_raw+=(v_x_raw*ang_vel_z)
+        # v_x_raw+=(-v_y_raw*ang_vel_z)*5
+        # v_y_raw+=(v_x_raw*ang_vel_z)*5
         ang_z = self.euler_from_pose(pose)[2]
         v_x = np.cos(ang_z)*v_x_raw+np.sin(ang_z)*v_y_raw
         v_y = np.cos(ang_z)*v_y_raw-np.sin(ang_z)*v_x_raw

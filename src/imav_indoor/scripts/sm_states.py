@@ -52,8 +52,10 @@ class takeoff(smach.State):
         for i in range(10):
             self.takeoff_topic.publish(Empty())
             rospy.sleep(0.1)
-        while self.z < 0.8 and not rospy.is_shutdown():
-            rospy.sleep(0.1)
+        # while self.z < 0.8 and not rospy.is_shutdown():
+        #     rospy.sleep(0.1)
+        rospy.sleep(1)
+        
         altitude_sub.unregister()
         return 'done'
 
@@ -130,11 +132,11 @@ class align_flag(smach.State):
 
 class face_flag(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['done', 'error'])
+        smach.State.__init__(self, outcomes=['done','error'])
         self.camera_topic = rospy.Publisher("/bebop/camera_control", Twist, queue_size=1)
 
-        self.running_feature_pub= rospy.Publisher("cv_detection/feature_detector/set_running_state", Bool, queue_size=1)
-        self.ref_image_pub= rospy.Publisher("cv_detection/feature_detector/set_ref_image", String,queue_size=1)
+        self.running_feature_pub= rospy.Publisher("cv_detector/feature_detector/set_running_state", Bool, queue_size=1)
+        self.ref_image_pub= rospy.Publisher("cv_detector/feature_detector/set_ref_image", String,queue_size=1)
 
         self.pose_pub = rospy.Publisher("/control/position", Pose, queue_size=1)
         self.running_control_pub = rospy.Publisher("/control/set_running_state", Bool, queue_size=1)
@@ -148,7 +150,7 @@ class face_flag(smach.State):
             rospy.sleep(0.1)
 
         # self.color_pub.publish("blue")
-        self.ref_image_pub.publish("flag2.png")
+        self.ref_image_pub.publish("flag.png")
         self.running_feature_pub.publish(True)
 
         # p = Point()
@@ -159,19 +161,19 @@ class face_flag(smach.State):
         
         routine_name = 'face_all_flags'
 
-        if routine_name in moving_routines.keys():
-            new_pose = ros_numpy.msgify(Pose,np.array(moving_routines[routine_name][0]))
-            print(new_pose)
-            self.pose_pub.publish(new_pose)
-            self.running_control_pub.publish(True)
-            rospy.wait_for_message("/control/aligned", Bool)
-        else:
-            print("no routine named: "+routine_name)
-            print(moving_routines.keys())
-            return 'error'
+        # if routine_name in moving_routines.keys():
+        #     new_pose = ros_numpy.msgify(Pose,np.array(moving_routines[routine_name][0]))
+        #     print(new_pose)
+        #     self.pose_pub.publish(new_pose)
+        #     self.running_control_pub.publish(True)
+        #     rospy.wait_for_message("/control/aligned", Bool)
+        # else:
+        #     print("no routine named: "+routine_name)
+        #     print(moving_routines.keys())
+        #     return 'error'
 
-        p = rospy.wait_for_message("/cv_detection/feature_detection/features_center", Point)
-        if p.x < 200:
+        p = rospy.wait_for_message("/cv_detection/feature_detector/features_center", Point)
+        if p.x < 250:
             routine_name = 'flag1'
         elif p.x < 600:
             routine_name = 'flag2'
@@ -179,16 +181,16 @@ class face_flag(smach.State):
             routine_name = 'flag3'
         print(routine_name)
 
-        if routine_name in moving_routines.keys():
-            new_pose = ros_numpy.msgify(Pose,np.array(moving_routines[routine_name][0]))
-            print(new_pose)
-            self.pose_pub.publish(new_pose)
-            self.running_control_pub.publish(True)
-            rospy.wait_for_message("/control/aligned", Bool)
-        else:
-            print("no routine named: "+routine_name)
-            print(moving_routines.keys())
-            return 'error'
+        # if routine_name in moving_routines.keys():
+        #     new_pose = ros_numpy.msgify(Pose,np.array(moving_routines[routine_name][0]))
+        #     print(new_pose)
+        #     self.pose_pub.publish(new_pose)
+        #     self.running_control_pub.publish(True)
+        #     rospy.wait_for_message("/control/aligned", Bool)
+        # else:
+        #     print("no routine named: "+routine_name)
+        #     print(moving_routines.keys())
+        #     return 'error'
 
         print("ok")
 
@@ -215,6 +217,7 @@ class capture_flag (smach.State):
 
         self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_running_state", Bool,queue_size=1)
         self.save_detection_pub = rospy.Publisher("cv_detection/rectangle_detector/save_detection", String, queue_size=1)
+        self.save_image_raw_pub = rospy.Publisher("cv_detection/rectangle_detector/save_image_raw", String, queue_size=1)
 
     def execute(self, userdata):
         self.running_rect_pub.publish(True)
@@ -222,6 +225,8 @@ class capture_flag (smach.State):
         count_erros = 0
         detection_saved = False
         while not detection_saved:
+            self.save_image_raw_pub.publish('flag_raw.png')
+
             self.save_detection_pub.publish('flag.png')
             try:
                 detection_saved = rospy.wait_for_message('cv_detection/rectangle_detector/detection_saved', Bool, 0.5)
@@ -245,7 +250,7 @@ class face_shelf (smach.State):
 
 
     def execute(self, userdata):
-
+        rospy.sleep(2)
         self.running_control_pub.publish(True)
         # self.pose_pub.publish()
         routine_name = 'shelf'
@@ -271,20 +276,33 @@ class face_shelf (smach.State):
 class align_window(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['done'])
-
+        self.camera_topic = rospy.Publisher("/bebop/camera_control", Twist, queue_size=1)   
         # self.running_rect_pub= rospy.Publisher("/cv_detection/rectangle_detector/set_running_state", Bool,queue_size=1)
         self.running_color_pub= rospy.Publisher("cv_detection/color_range/set_running_state", Bool, queue_size=1)
         self.color_pub= rospy.Publisher("cv_detection/color_range/set_color", String,queue_size=1)
+
+        self.camera_angle_pub= rospy.Publisher("/control/align_reference/set_camera_angle", Float32,queue_size=1)
+        self.speed_pub= rospy.Publisher("control/align_reference/set_speed", Float32,queue_size=1)
+        self.precision_pub= rospy.Publisher("/control/align_reference/set_precision", Point,queue_size=1)
+        self.pid_config_pub= rospy.Publisher("/control/align_reference/set_pid_config", String,queue_size=1)
         self.goal_point_pub = rospy.Publisher("/control/align_reference/set_goal_point", Point, queue_size=1)
         self.running_aligned_pub = rospy.Publisher("/control/align_reference/set_running_state", Bool, queue_size=1)
-        
     #     self.aligned_sub = rospy.Subscriber("/control/align_reference/aligned", Bool, self.aligned_callback, queue_size=1)
 
     # def aligned_callback()
     def execute(self, userdata):
-
+        self.color_pub.publish("yellow")
+        print("ok")
         self.running_color_pub.publish(True)
-        self.color_pub.publish("green_portal")
+        camera_init_angle = Twist()
+        camera_init_angle.angular.y = 3 # looking down
+        for i in range(1): # to make sure that the camera is on the right position
+            self.camera_topic.publish(camera_init_angle)
+            rospy.sleep(0.1)
+        self.pid_config_pub.publish("default")
+        self.camera_angle_pub.publish(0)
+
+        self.color_pub.publish("yellow")
         self.running_aligned_pub.publish(True)
         p = Point()
         p.x = 856/2
@@ -327,7 +345,7 @@ class pass_through_shelf(smach.State):
         rospy.sleep(0.3)
         rospy.wait_for_message("/control/aligned", Bool)
         p = Pose()
-        p.position.x = 2.4
+        p.position.x = 3
         p.orientation.w = 1
         self.relative_pose_pub.publish(p)
         rospy.sleep(0.1)
@@ -430,16 +448,49 @@ class inventory(smach.State):
             "cv_detection/inventory/read_tag", Empty, queue_size=1)
         self.stop_reading_qr_pub= rospy.Publisher(
             "cv_detection/inventory/stop_reading_qr", Empty, queue_size=1)
-        
+        self.running_color_pub= rospy.Publisher("cv_detection/color_range/set_running_state", Bool, queue_size=1)
+        self.color_pub= rospy.Publisher("cv_detection/color_range/set_color", String,queue_size=1)
+
+        self.color_ref_point_sub  = rospy.Subscriber("/control/align_reference/ref_point", Point, self.color_rect_callback)
+        self.current_pose_sub = rospy.Subscriber("/odom_slam_sf/current_pose", Pose, self.pose_callback)
+
         self.shelf = shelf
 
+        self.current_pose  = None
+
+    def pose_callback(self,data):#pose
+        self.current_pose = data
+
+    def color_rect_callback(self,data):# Point
+        global frame_coord
+        # print("sdfhnsolg")
+        print(data.z)
+        if data.z > 300:
+            print("detected")
+            frame_pose = self.current_pose
+
+    def exit(self):
+        self.stop_reading_qr_pub.publish(Empty())            
+        self.running_inventory_pub.publish(False)            
+        self.running_control_pub.publish(False)
+        self.running_color_pub.publish(False)
+
+        # self.color_ref_point_sub.unregister()
+        # self.current_pose_sub.unregister()
 
     def execute(self, userdata):
 
+        
+
         self.running_inventory_pub.publish(True)
         self.running_control_pub.publish(True)
-        # self.pose_pub.publish()
-        routine_name = 'qr_'+str(self.shelf)
+
+
+        self.running_color_pub.publish(True)
+        self.color_pub.publish("yellow")
+
+        # routine_name = 'qr_'+str(self.shelf)
+        routine_name = 'test'
 
         if routine_name in moving_routines:
             for i, position in enumerate(moving_routines[routine_name]):
@@ -450,7 +501,7 @@ class inventory(smach.State):
                     print("tag")
                 else:
                     print("qr")
-                    
+
                 new_pose = ros_numpy.msgify(Pose,np.array(position))
                 print(new_pose)
                 self.pose_pub.publish(new_pose)
@@ -460,19 +511,16 @@ class inventory(smach.State):
                     self.read_tag_pub.publish(Empty())
                     rospy.sleep(1)
 
-            
+            self.exit()
 
-            self.stop_reading_qr_pub.publish(Empty())            
-            self.running_inventory_pub.publish(False)            
-            self.running_control_pub.publish(False)
+            
             return 'done'
         else:
             print("no routine named: "+routine_name)
             print(moving_routines)
             
-        self.stop_reading_qr_pub.publish(Empty())
-        self.running_control_pub.publish(False)
-        self.running_inventory_pub.publish(False)
+        self.exit()
+
         return 'error'
 
 

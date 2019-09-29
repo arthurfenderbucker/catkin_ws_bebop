@@ -19,8 +19,8 @@ inventory_path = str(rospack.get_path('cv_detection')+'/config/inventory.json')
 
 
 class Inventory:
-    running = True
-    def __init__(self,color="dark_green",image_topic="/usb_cam/image_raw", pub_topic="/cv_detection/color_range/detection"):
+    running = False
+    def __init__(self,color="dark_green",image_topic="/bebop/image_raw", pub_topic="/cv_detection/color_range/detection"):
 
 
         rospy.init_node('alpha', anonymous=True)
@@ -51,6 +51,7 @@ class Inventory:
         self.qrs = []
         self.count_tag_reads = 0
         self.tag_reads = []
+        print("done")
     # ========================== topics callbacks ==========================
     def set_running_state(self,data):#Bool
         self.running = data.data
@@ -164,7 +165,26 @@ class Inventory:
     def save_inventory(self):
         with open(inventory_path, 'w') as json_data_file:
             json.dump(self.inventory_data, json_data_file)
-                    
+    def display(self,im, decodedObjects):
+
+        # Loop over all decoded objects
+        for decodedObject in decodedObjects:
+            points = decodedObject.polygon
+
+            # If the points do not form a quad, find convex hull
+            if len(points) > 4 :
+                hull = cv2.convexHull(np.array([point for point in points], dtype=np.float32))
+                hull = list(map(tuple, np.squeeze(hull)))
+            else:
+                hull = points
+
+                # Number of points in the convex hull
+                n = len(hull)
+
+            # Draw the convext hull
+            for j in range(0,n):
+                cv2.line(im, hull[j], hull[ (j+1) % n], (255,0,0), 3)
+
     def run(self):
         while not rospy.is_shutdown():
             if self.running:
@@ -213,14 +233,17 @@ class Inventory:
                         print('ok')
                 
                 #detect QR
-                if self.reading_qr and not self.shelf_slot == '': # a tag habe been detected
+                
+                if True:#self.reading_qr and not self.shelf_slot == '': # a tag habe been detected
                     decodedObjects = pyzbar.decode(cv_image)
+                    self.display(cv_image,decodedObjects)
+                    cv2.imshow("image",cv_image)
                     for obj in decodedObjects:
                         x,y,w,h = obj.rect
 
                         print('Type : ', obj.type)
                         print('Data : ', obj.data,'\n')
-                        if y < tag_y: #only consider boxes above the shelf slot tag
+                        if y < tag_y-15: #only consider boxes above the shelf slot tag
                             print("above")
                             if not obj.data in self.inventory_data[self.shelf_slot]: #dont repeat qrs
                                 self.inventory_data[self.shelf_slot]+=[obj.data]
