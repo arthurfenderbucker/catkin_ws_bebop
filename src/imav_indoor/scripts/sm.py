@@ -27,7 +27,7 @@ def main():
         # Add states to the container
         
         smach.StateMachine.add('takeoff', takeoff(),
-                               transitions={'done': 'align_window',
+                               transitions={'done': 'inventory1',
                                             'error': 'land_now'})
         smach.StateMachine.add('align_window', align_window(),
                                transitions={'done': 'pass_through_shelf'})

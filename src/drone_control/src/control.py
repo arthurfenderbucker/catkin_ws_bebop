@@ -100,6 +100,12 @@ class vso_controler(object): # visual odometry drone controler
 
     def land(self,callback_data):
         self.running = False
+        vel = Twist()
+        vel.linear.x = 0
+        vel.linear.y = 0
+        vel.linear.z = 0
+        self.setpoint_velocity_pub.publish(vel)
+
 
     def takeoff(self,callback_data):
         self.align_camera()

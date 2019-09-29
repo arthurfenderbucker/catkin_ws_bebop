@@ -117,6 +117,12 @@ class adjust_position():
         self.speed = data.data
     def land(self,data):#empty
         self.running = False
+        vel = Twist()
+        vel.linear.x = 0
+        vel.linear.y = 0
+        vel.linear.z = 0
+        self.setpoint_vel_pub.publish(vel)
+
     def point_callback(self, data): #point
         self.last_ref_point_time = rospy.get_time()
         self.bool_align = True

@@ -52,8 +52,8 @@ class takeoff(smach.State):
         for i in range(10):
             self.takeoff_topic.publish(Empty())
             rospy.sleep(0.1)
-        # while self.z < 0.8 and not rospy.is_shutdown():
-        #     rospy.sleep(0.1)
+        while self.z < 0.8 and not rospy.is_shutdown():
+            rospy.sleep(0.1)
         rospy.sleep(1)
         
         altitude_sub.unregister()
@@ -291,7 +291,7 @@ class align_window(smach.State):
 
     # def aligned_callback()
     def execute(self, userdata):
-        self.color_pub.publish("yellow")
+        self.color_pub.publish("blue")
         print("ok")
         self.running_color_pub.publish(True)
         camera_init_angle = Twist()
@@ -302,7 +302,7 @@ class align_window(smach.State):
         self.pid_config_pub.publish("default")
         self.camera_angle_pub.publish(0)
 
-        self.color_pub.publish("yellow")
+        self.color_pub.publish("blue")
         self.running_aligned_pub.publish(True)
         p = Point()
         p.x = 856/2
@@ -442,12 +442,9 @@ class inventory(smach.State):
 
         self.pose_pub = rospy.Publisher("/control/position", Pose, queue_size=1)
         self.running_control_pub = rospy.Publisher("/control/set_running_state", Bool, queue_size=1)
-        self.running_inventory_pub= rospy.Publisher(
-            "cv_detection/inventory/set_runnig_state", Bool, queue_size=1)
-        self.read_tag_pub= rospy.Publisher(
-            "cv_detection/inventory/read_tag", Empty, queue_size=1)
-        self.stop_reading_qr_pub= rospy.Publisher(
-            "cv_detection/inventory/stop_reading_qr", Empty, queue_size=1)
+        self.running_inventory_pub= rospy.Publisher("cv_detection/inventory/set_runnig_state", Bool, queue_size=1)
+        self.read_tag_pub= rospy.Publisher("cv_detection/inventory/read_tag", Empty, queue_size=1)
+        self.stop_reading_qr_pub= rospy.Publisher("cv_detection/inventory/stop_reading_qr", Empty, queue_size=1)
         self.running_color_pub= rospy.Publisher("cv_detection/color_range/set_running_state", Bool, queue_size=1)
         self.color_pub= rospy.Publisher("cv_detection/color_range/set_color", String,queue_size=1)
 
@@ -489,27 +486,33 @@ class inventory(smach.State):
         self.running_color_pub.publish(True)
         self.color_pub.publish("yellow")
 
-        # routine_name = 'qr_'+str(self.shelf)
-        routine_name = 'test'
+        routine_name = 'qr'+str(self.shelf)
+        # routine_name = 'test'
 
         if routine_name in moving_routines:
             for i, position in enumerate(moving_routines[routine_name]):
                 print("------------- pose ----------")
 
-                if(i%2==0):
-                    self.stop_reading_qr_pub.publish(Empty())                        
-                    print("tag")
-                else:
-                    print("qr")
+                self.stop_reading_qr_pub.publish(Empty())                        
 
                 new_pose = ros_numpy.msgify(Pose,np.array(position))
                 print(new_pose)
                 self.pose_pub.publish(new_pose)
                 rospy.wait_for_message("/control/aligned", Bool)
-                
-                if(i%2==0):
-                    self.read_tag_pub.publish(Empty())
-                    rospy.sleep(1)
+                self.read_tag_pub.publish(Empty())
+                rospy.sleep(0.5)
+                new_pose.position.z += 1.5
+                new_pose = ros_numpy.msgify(Pose,np.array(position))
+                print(new_pose)
+                self.pose_pub.publish(new_pose)
+                rospy.wait_for_message("/control/aligned", Bool)
+                self.read_tag_pub.publish(Empty())
+                rospy.sleep(0.5)
+                new_pose.position.z += 1.3
+                new_pose = ros_numpy.msgify(Pose,np.array(position))
+                print(new_pose)
+                self.pose_pub.publish(new_pose)
+                rospy.wait_for_message("/control/aligned", Bool)
 
             self.exit()
 
