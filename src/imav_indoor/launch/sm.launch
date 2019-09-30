@@ -27,11 +27,11 @@
     </node>
 
 
-    <node name="manual_control" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" required="true" launch-prefix="gnome-terminal -e ">
+    <!-- <node name="manual_control" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" required="true" launch-prefix="gnome-terminal -e ">
         <param name="cmd_vel" type="string" value="/bebop/cmd_vel" />
         
-    </node>
-
+    </node> -->
+    <!-- <node name="Kill_button" pkg="imav_indoor" type="kill_button.py" required="true" output="screen"/> -->
     <node name="Kill_button" pkg="imav_indoor" type="kill_button.py" required="true" output="screen"/>
     
     <!-- <node name="control" pkg="drone_control" required="true" type="control.py" output="screen">

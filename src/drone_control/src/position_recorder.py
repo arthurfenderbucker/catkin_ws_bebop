@@ -31,7 +31,7 @@ routine_name = "default"
 while decision != 2 :
     print("Selected routine: "+routine_name)
     print (' 1-5: save position \n  7: change routine \n 8: remove routine \n 9: exit ')
-    decision = input()
+    decision = input()                                                                                                         
     if decision >= 1 and decision < 7:
         if len(pose)>0: 
             if routine_name in positions_data.keys():

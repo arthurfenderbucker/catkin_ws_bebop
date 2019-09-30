@@ -240,30 +240,29 @@ class capture_flag (smach.State):
 
 
 
-class face_shelf (smach.State):
-    def __init__(self):
+class follow_routine (smach.State):
+    def __init__(self, routine_name):
         smach.State.__init__(self, outcomes=['done'])
 
         self.pose_pub = rospy.Publisher("/control/position", Pose, queue_size=1)
         self.running_control_pub = rospy.Publisher("/control/set_running_state", Bool, queue_size=1)
         # self.running_control_pub = rospy.Publisher("/control/aligned", Bool, queue_size=1)
-
+        self.routine_name = routine_name
 
     def execute(self, userdata):
-        rospy.sleep(2)
+        # rospy.sleep(2)
         self.running_control_pub.publish(True)
         # self.pose_pub.publish()
-        routine_name = 'shelf'
 
-        if routine_name in moving_routines:
-            for position in moving_routines[routine_name]:
+        if self.routine_name in moving_routines:
+            for position in moving_routines[self.routine_name]:
                 print("------------- pose ----------")
                 new_pose = ros_numpy.msgify(Pose,np.array(position))
                 print(new_pose)
                 self.pose_pub.publish(new_pose)
                 rospy.wait_for_message("/control/aligned", Bool)
         else:
-            print("no routine named: "+routine_name)
+            print("no routine named: "+self.routine_name)
             print(moving_routines)
         self.running_control_pub.publish(False)
         return 'done'
@@ -547,9 +546,9 @@ class drop_box(smach.State):
     def control(self,vec,t):
         p = Point()
         p.x, p.y, p.z = vec
-        for i in range(t*10):
+        for i in range(int(t*50)):
             self.vel_pub.publish(p)
-            rospy.sleep(0.1)
+            rospy.sleep(0.02)
 
     def execute(self, userdata):
         rospy.loginfo('drop_box')

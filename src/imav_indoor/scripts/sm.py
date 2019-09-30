@@ -27,11 +27,14 @@ def main():
         # Add states to the container
         
         smach.StateMachine.add('takeoff', takeoff(),
-                               transitions={'done': 'inventory1',
+                               transitions={'done': 'face_shelf',
                                             'error': 'land_now'})
+
         smach.StateMachine.add('align_window', align_window(),
                                transitions={'done': 'pass_through_shelf'})
 
+        smach.StateMachine.add('face_shelf', follow_routine('shelf'),
+                               transitions={'done': 'land_now'}) #goes to the side of the shelf 
 
 
 
@@ -80,8 +83,6 @@ def main():
         smach.StateMachine.add('pass_through_shelf', pass_through_shelf(),
                                transitions={'done': 'land_now'})
 
-        smach.StateMachine.add('face_shelf', face_shelf(),
-                               transitions={'done': 'land_now'}) #goes to the side of the shelf 
         
         smach.StateMachine.add('drop_box', drop_box(),
                                transitions={'done': 'land_now'})
