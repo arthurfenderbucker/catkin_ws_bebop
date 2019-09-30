@@ -53,8 +53,11 @@ add current position to routine:
 
 
 Actions:
-    '=' : land over box  '{':take_off
-    '}': land
+    '=' : land over box  
+    '{':take_off              '}': land
+    'A':'toogle_inventory',
+    's':'stop_reading_qr_code',
+    'd':'read_flag'
 
 anything else : stop
 
@@ -101,15 +104,16 @@ record_position  ={
     '4':'qr2',
     '5':'frame2',
     '6':'box',
-    '7':'drop_box',
-    '8':'drop_box',
-    '9':'drop_box',
+    '7':'deliver_box',
     '*':'delete last'}
     
 actions = {
     '{':'take_off',
     '}':'land',
-    '=':'face_box'}
+    '=':'face_box',
+    'A':'toogle_inventory',
+    's':'stop_reading_qr_code',
+    'd':'read_flag'}
 
 
 def getKey():
@@ -132,17 +136,27 @@ def pose_callback(data):
 face_box_state = face_box()
 
 drop_box_state = drop_box()
+pickup_box_state = pickup_box()
+inventory_state = inventory()
 
 
 sub = rospy.Subscriber("/odom_slam_sf/current_pose", Pose, pose_callback, queue_size=1)
-takeoff_topic = rospy.Publisher("/bebop/takeoff", Empty, queue_size=1)
+takeoff_topic = rospy.Publisher("/bebop/takeofff", Empty, queue_size=1)
 land_topic = rospy.Publisher("/bebop/land", Empty, queue_size=1)
+read_tag_pub= rospy.Publisher("cv_detection/inventory/read_tag", Empty, queue_size=1)
+running_inventory_pub= rospy.Publisher("cv_detection/inventory/set_runnig_state", Bool, queue_size=1)
+stop_reading_qr_pub= rospy.Publisher("cv_detection/inventory/stop_reading_qr", Empty, queue_size=1)
+
+running_inventory = True
+
+
 
 if __name__=="__main__":
     settings = termios.tcgetattr(sys.stdin)
 
     pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size = 1)
     rospy.init_node('teleop_twist_keyboard')
+    running_inventory_pub.publish(running_inventory)
 
     speed = rospy.get_param("~speed", 0.5)
     turn = rospy.get_param("~turn", 1.0)
@@ -232,9 +246,15 @@ if __name__=="__main__":
                     land_topic.publish(Empty())
                 elif key == '=':
                     face_box_state.execute(None)
-                    drop_box_state.execute(None)
-                    #IMPLEMENT
-                    pass
+                    pickup_box_state.execute(None)
+                elif key == 'A':
+                    running_inventory_pub.publish(running_inventory)
+                    running_inventory= not running_inventory
+                elif key == 's':
+                    stop_reading_qr_pub.publish(Empty())
+                elif key == 'd':
+                    read_tag_pub.publish(Empty())
+                
             else:
                 x = 0
                 y = 0

@@ -442,6 +442,8 @@ class inventory(smach.State):
         self.pose_pub = rospy.Publisher("/control/position", Pose, queue_size=1)
         self.running_control_pub = rospy.Publisher("/control/set_running_state", Bool, queue_size=1)
         self.running_inventory_pub= rospy.Publisher("cv_detection/inventory/set_runnig_state", Bool, queue_size=1)
+
+        
         self.read_tag_pub= rospy.Publisher("cv_detection/inventory/read_tag", Empty, queue_size=1)
         self.stop_reading_qr_pub= rospy.Publisher("cv_detection/inventory/stop_reading_qr", Empty, queue_size=1)
         self.running_color_pub= rospy.Publisher("cv_detection/color_range/set_running_state", Bool, queue_size=1)
