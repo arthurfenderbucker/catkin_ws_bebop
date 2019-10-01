@@ -141,7 +141,7 @@ inventory_state = inventory()
 
 
 sub = rospy.Subscriber("/odom_slam_sf/current_pose", Pose, pose_callback, queue_size=1)
-takeoff_topic = rospy.Publisher("/bebop/takeofff", Empty, queue_size=1)
+takeoff_topic = rospy.Publisher("/bebop/takeoff", Empty, queue_size=1)
 land_topic = rospy.Publisher("/bebop/land", Empty, queue_size=1)
 read_tag_pub= rospy.Publisher("cv_detection/inventory/read_tag", Empty, queue_size=1)
 running_inventory_pub= rospy.Publisher("cv_detection/inventory/set_runnig_state", Bool, queue_size=1)
@@ -176,7 +176,14 @@ if __name__=="__main__":
                 y = moveBindings[key][1]
                 z = moveBindings[key][2]
                 th = moveBindings[key][3]
-            elif key in speedBindings.keys():
+            else:
+                x = 0
+                y = 0
+                z = 0
+                th = 0
+                if (key == '\x03'):
+                    break
+            if key in speedBindings.keys():
                 speed = speed * speedBindings[key][0]
                 turn = turn * speedBindings[key][1]
 
@@ -184,7 +191,7 @@ if __name__=="__main__":
                 if (status == 14):
                     print(msg)
                 status = (status + 1) % 15
-            elif key in record_position.keys():
+            if key in record_position.keys():
 
                 if key == '*': #delete all routine
                     c= str(raw_input("DELETE routine(s)! are you sure? (a(all)/y/N):"))
@@ -247,6 +254,7 @@ if __name__=="__main__":
                 elif key == '=':
                     face_box_state.execute(None)
                     pickup_box_state.execute(None)
+                    land_topic.publish(Empty())
                 elif key == 'A':
                     running_inventory_pub.publish(running_inventory)
                     running_inventory= not running_inventory
@@ -255,13 +263,6 @@ if __name__=="__main__":
                 elif key == 'd':
                     read_tag_pub.publish(Empty())
                 
-            else:
-                x = 0
-                y = 0
-                z = 0
-                th = 0
-                if (key == '\x03'):
-                    break
 
             twist = Twist()
             twist.linear.x = x*speed; twist.linear.y = y*speed; twist.linear.z = z*speed
