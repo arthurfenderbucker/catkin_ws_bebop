@@ -28,16 +28,16 @@ class vso_controler(object): # visual odometry drone controler
     positioning_vel = np.array([0.0,0.0,0.0,0.0])
 
 
-    pid_x = PID(P=0.05,I=0.0000,D=0.13)
-    pid_y = PID(P=0.05,I=0.0000,D=0.13)
+    pid_x = PID(P=0.09,I=0.000031,D=0.08)
+    pid_y = PID(P=0.09,I=0.000031,D=0.08)
     pid_z = PID(P=0.18,I=0.00001,D=0.0012)
-    pid_ang = PID(P=0.068,I=0.0,D=0.003)
+    pid_ang = PID(P=0.09,I=0.0,D=0.003)
 
     camera_angle = Twist()
     setted_vel = Twist()
 
     control_mode = "position" # position or velocity  
-    precision = np.array([0.15,0.15,0.1,0.1])
+    precision = np.array([0.2,0.2,0.1,0.1])
     count_aligned = 0
     def __init__(self):
 
@@ -164,9 +164,9 @@ class vso_controler(object): # visual odometry drone controler
 
     def velocity_callback(self, goal_vec): #Point
         vel = Twist()
-        vel.linear.x = goal_vec.x
-        vel.linear.y = goal_vec.y
-        vel.linear.z = goal_vec.z
+        vel.linear.x = max(0.2,goal_vec.x)
+        vel.linear.y = max(0.3,goal_vec.y)
+        vel.linear.z = max(0.5,goal_vec.z)
         self.setpoint_velocity_pub.publish(vel)
         rospy.loginfo("got velocity goal")
 
@@ -223,11 +223,16 @@ class vso_controler(object): # visual odometry drone controler
         # delta_y = (v_x_raw*ang_vel_z)
         # print(delta_x)
         # print(delta_y)
-        v_x_raw+=(-v_y_raw*ang_vel_z)
-        v_y_raw+=(v_x_raw*ang_vel_z)
+        # v_x_raw+=(-v_y_raw*ang_vel_z)*5
+        # v_y_raw+=(v_x_raw*ang_vel_z)*5
         ang_z = self.euler_from_pose(pose)[2]
         v_x = np.cos(ang_z)*v_x_raw+np.sin(ang_z)*v_y_raw
         v_y = np.cos(ang_z)*v_y_raw-np.sin(ang_z)*v_x_raw
+        if self.count_aligned > 3:
+            v_x = 0
+            v_y = 0
+        else:
+            v_ang = 0
         # v_x, v_y, v_z = np.dot(self.current_pose_np[:3,:3],np.array([v_x,v_y,v_z])).tolist()
         return [v_x, v_y, v_z, v_ang]
     def reset_pid(self):
@@ -266,13 +271,13 @@ class vso_controler(object): # visual odometry drone controler
     def check_aligment(self):
         e = self.pid_get_error()
 
-        if abs(e[0]) > self.precision[0] or abs(e[1]) > self.precision[1] or abs(e[2]) > self.precision[2] or abs(e[3]) > self.precision[3]:
+        if abs(e[0]) > self.precision[0] or abs(e[1]) > self.precision[1] or abs(e[2]) > self.precision[2]:
             self.count_aligned = 0
         else:
             self.count_aligned += 1
             print(e)
 
-        if self.count_aligned > 5:
+        if self.count_aligned > 5 and abs(e[3]) < self.precision[3]: 
             rospy.loginfo("ALIGNED!!")
             self.aligned.publish(True)
     
@@ -283,9 +288,20 @@ class vso_controler(object): # visual odometry drone controler
                 self.check_aligment()
 
                 adjusted_vel = Twist()
-                adjusted_vel.linear.x = self.positioning_vel[0]
-                adjusted_vel.linear.y = self.positioning_vel[1]
-                adjusted_vel.linear.z = self.positioning_vel[2]
+                max_vel = 0.6
+                if self.positioning_vel[0] >0:
+                    adjusted_vel.linear.x = min(max_vel,self.positioning_vel[0])
+                else:
+                    adjusted_vel.linear.x = max(-max_vel,self.positioning_vel[0])
+                if self.positioning_vel[1] >0:
+                    adjusted_vel.linear.y = min(max_vel,self.positioning_vel[1])
+                else:
+                    adjusted_vel.linear.y = max(-max_vel,self.positioning_vel[1])
+                if self.positioning_vel[2] >0:
+                    adjusted_vel.linear.z = min(max_vel,self.positioning_vel[2])
+                else:
+                    adjusted_vel.linear.y = max(-max_vel,self.positioning_vel[2])
+                
                 adjusted_vel.angular.z = self.positioning_vel[3]
                 
 

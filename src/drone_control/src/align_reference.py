@@ -117,6 +117,7 @@ class adjust_position():
         self.speed = data.data
     def land(self,data):#empty
         self.running = False
+        vel = Twist()
         vel.linear.x = 0
         vel.linear.y = 0
         vel.linear.z = 0

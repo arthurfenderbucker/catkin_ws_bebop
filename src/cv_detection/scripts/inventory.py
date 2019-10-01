@@ -19,8 +19,8 @@ inventory_path = str(rospack.get_path('cv_detection')+'/config/inventory.json')
 
 
 class Inventory:
-    running = True
-    def __init__(self,color="dark_green",image_topic="/usb_cam/image_raw", pub_topic="/cv_detection/color_range/detection"):
+    running = False
+    def __init__(self,color="dark_green",image_topic="/bebop/image_raw", pub_topic="/cv_detection/color_range/detection"):
 
 
         rospy.init_node('alpha', anonymous=True)
@@ -49,8 +49,9 @@ class Inventory:
         self.inventory_data = {}
         self.shelf_slot = ''
         self.qrs = []
-        self.count_tag_reads = 0
+        self.count_tag_reads = 20
         self.tag_reads = []
+        print("done")
     # ========================== topics callbacks ==========================
     def set_running_state(self,data):#Bool
         self.running = data.data
@@ -85,7 +86,7 @@ class Inventory:
 
     def detect(self, image):
         rospy.loginfo("Detecting Alphanumeric Codes!")
-        gray = cv2.cvtColor(image[20:-20,20:-20], cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         et, im_th = cv2.threshold(gray, 130, 255, cv2.THRESH_BINARY_INV)
         
         
@@ -93,7 +94,7 @@ class Inventory:
         # # gray = cv2.morphologyEx(image, cv2.MORPH_CLOSE, se)
         # f = 300/im_th.shape[0]
         # im_th = cv2.resize(im_th,(int(f*im_th.shape[1]),300),interpolation = cv2.INTER_AREA)
-        cv2.imshow("image", im_th)
+        cv2.imshow("imageeeeeeeee", im_th)
         # OCR
 
         config = '--oem 3 --psm 10 -c tessedit_char_whitelist=0123456789AB'#CDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -102,7 +103,7 @@ class Inventory:
         return text
     
 
-    def get_rect(self,image, show = False):
+    def get_color_rect(self,image, show = False):
 
         frame_to_thresh = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) #convert to HSV
         # cv2.imshow("Trackbars",self.color_range_image)
@@ -142,9 +143,48 @@ class Inventory:
             img_crop, img_rot = self.crop_rect(image, rect)
             return img_crop, rect
         return None,None
+    def get_rect(self, image):
+        # convert the image to grayscale, blur it, and find edges
+        # in the image
+        img = image.copy()
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        #------------- contours, area & perpendicular approach -----------------
+        for i in range(5):
+            gray = cv2.bilateralFilter(gray, 7, 3, 11)
+        cv2.imshow("gray bi", gray)
+        edged = cv2.Canny(gray, 30, 200, apertureSize=5)
+        cv2.imshow("edged", edged)
+
+        # find contours in the edged image, keep only the ones with the higher area
+        im2, cnts, _ = cv2.findContours(edged.copy(),
+                                        cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:30]
+        poligons = cv_common.filter_cnts(cnts, filter_rotation=True, max_sides=4)
+        
+        if len(poligons) > 0:
+            # find the largest contour in the mask, then use
+            # it to compute the minimum enclosing circle and
+            # centroid
+            c = poligons[0]
+            ((x, y), radius) = cv2.minEnclosingCircle(c)
+            M = cv2.moments(c)
+            center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+            
+            rect = cv2.minAreaRect(c)
+            # rect = cv2.boundingRect(c)
+
+            # return image[rect[0]:rect[2],rect[1]:rect[3]]
+            # print(rect)
+            img_crop, img_rot = self.crop_rect(image, rect)
+            return img_crop, rect
+        else:
+            return None, None
+
 
     def read_tag(self,empty_data):
         self.count_tag_reads = 0
+        self.tag_reads = []
         print("read_tag")
 
     def stop_reading_qr(self,data):#Bool
@@ -164,7 +204,26 @@ class Inventory:
     def save_inventory(self):
         with open(inventory_path, 'w') as json_data_file:
             json.dump(self.inventory_data, json_data_file)
-                    
+    def display(self,im, decodedObjects):
+
+        # Loop over all decoded objects
+        for decodedObject in decodedObjects:
+            points = decodedObject.polygon
+
+            # If the points do not form a quad, find convex hull
+            if len(points) > 4 :
+                hull = cv2.convexHull(np.array([point for point in points], dtype=np.float32))
+                hull = list(map(tuple, np.squeeze(hull)))
+            else:
+                hull = points
+
+                # Number of points in the convex hull
+                n = len(hull)
+
+            # Draw the convext hull
+            for j in range(0,n):
+                cv2.line(im, hull[j], hull[ (j+1) % n], (255,0,0), 3)
+
     def run(self):
         while not rospy.is_shutdown():
             if self.running:
@@ -193,7 +252,7 @@ class Inventory:
                 #detect alpha num (Tag)
                 num_reads = 20
                 #dont look for tags all the time and when looking, consider only tags biger than ...
-                if self.count_tag_reads < num_reads and not cropped_image is None and cropped_image.shape[0] > 40 and cropped_image.shape[1] > 40: 
+                if self.count_tag_reads < num_reads and not cropped_image is None and cropped_image.shape[0] > 20 and cropped_image.shape[1] > 20: 
                     text = self.detect(cropped_image)
                     self.count_tag_reads += 1
                     print(self.count_tag_reads)
@@ -207,20 +266,24 @@ class Inventory:
                         print(self.shelf_slot)
                         print("==============")
                         print(self.tag_reads)
-                        self.tag_reads = []
+
                         self.inventory_data[self.shelf_slot] = []
                         self.reading_qr = True
                         print('ok')
                 
                 #detect QR
-                if self.reading_qr and not self.shelf_slot == '': # a tag habe been detected
+                
+                if True:#self.reading_qr and not self.shelf_slot == '': # a tag habe been detected
                     decodedObjects = pyzbar.decode(cv_image)
+                    cv2.line(cv_image, (0,int(tag_y)), (0,int(tag_y)), (255,0,0), 3)
+                    self.display(cv_image,decodedObjects)
+                    cv2.imshow("image",cv_image)
                     for obj in decodedObjects:
                         x,y,w,h = obj.rect
-
-                        print('Type : ', obj.type)
-                        print('Data : ', obj.data,'\n')
-                        if y < tag_y: #only consider boxes above the shelf slot tag
+                        print("d ",)
+                        if y < tag_y-15: #only consider boxes above the shelf slot tag
+                            print('Type : ', obj.type)
+                            print('Data : ', obj.data,'\n')
                             print("above")
                             if not obj.data in self.inventory_data[self.shelf_slot]: #dont repeat qrs
                                 self.inventory_data[self.shelf_slot]+=[obj.data]

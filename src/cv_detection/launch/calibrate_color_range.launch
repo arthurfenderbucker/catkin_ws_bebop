@@ -1,5 +1,5 @@
 <launch>
-    <arg name="image_topic" default="/usb_cam/image_raw"/>
+    <arg name="image_topic" default="/bebop/image_raw"/>
     <arg name="pub_topic" default="/cv_detection/color_range/detection"/>
 
     <node pkg="cv_detection" name="calibrate_color_range" type="color_range.py" output="screen">

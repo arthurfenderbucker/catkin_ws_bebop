@@ -22,7 +22,7 @@ images_path = str(rospack.get_path('cv_detection')+'/imgs/rectangle/cropped/')
 bridge = CvBridge()
 
 class feature_detector():
-    def __init__(self,image_name="H3.png", image_topic="/usb_cam/image_raw", pub_topic="/cv_detection/feature_detector/detection"):
+    def __init__(self,image_name="test.png", image_topic="/usb_cam/image_raw", pub_topic="/cv_detection/feature_detector/detection"):
 
         rospy.init_node('feature_detector', anonymous = True)
 
@@ -46,6 +46,11 @@ class feature_detector():
         self.ref_image_sub = rospy.Subscriber(
             "cv_detection/feature_detector/set_ref_image", String, self.set_ref_image, queue_size = 1)
 
+        
+            
+
+        self.raw_features_pub = rospy.Publisher("/cv_detection/feature_detector/features_center", Point, queue_size=1)
+        
         self.ref_pub = rospy.Publisher(self.pub_topic, Point, queue_size=1)
         
         self.source_image = cv2.imread(images_path+image_name,cv2.IMREAD_GRAYSCALE )
@@ -91,7 +96,7 @@ class feature_detector():
         try:
             matches = self.bf.match(self.ref_description,description)
         except:
-            return None,None,None
+            return None,None,None, None
         #  print(matches)
         # Sort them in the order of their distance.
         matches = sorted(matches, key = lambda x:x.distance)
@@ -103,10 +108,10 @@ class feature_detector():
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
             matchesMask = mask.ravel().tolist()
 
-
             h,w = self.source_image.shape[:2]
             pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
             dst = cv2.perspectiveTransform(pts,M)
+            print( np.mean(dst_pts, axis=0))
             if draw_matches:
                 dst_show = dst + (w, 0)  # adding offset
                 draw_params = dict(matchColor = (0,255,0), # draw matches in green color
@@ -136,9 +141,9 @@ class feature_detector():
                 if show: 
                     cv_common.show_poligons(image, poligons)
 
-                return (x,y),radius, rect
+                return (x,y),radius, rect, np.mean(dst_pts, axis=0)[0]
             
-        return None, None, None
+        return None, None, None, None
 
     def run(self):
         while not rospy.is_shutdown():
@@ -153,8 +158,13 @@ class feature_detector():
                 (rows, cols, channels) = cv_image.shape
                 if not (cols > 60 and rows > 60):
                     continue
-                center,radius,rect = self.get_rect(cv_image)
+                center,radius,rect, features_center = self.get_rect(cv_image)
                 print(radius)
+                if not features_center is None:
+                    p_features = Point()
+                    p_features.x,p_features.y = features_center.tolist()
+                    self.raw_features_pub.publish(p_features)
+
                 if not center is None:
                     self.rect = rect
                     p = Point()

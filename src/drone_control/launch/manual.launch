@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <launch>
    
-    <node name="State_machine" pkg="imav_indoor" type="sm.py" required="true" output="screen"/>
+    <!-- <node name="State_machine" pkg="imav_indoor" type="sm.py" required="true" output="screen"/> -->
 
-    <node pkg="cv_detection" name="rectangle_detector" type="rectangle_detector.py" output="screen">
+    <!-- <node pkg="cv_detection" name="rectangle_detector" type="rectangle_detector.py" output="screen">
         <param name="image_topic" type="string" value="/bebop/image_raw" />
         <param name="pub_topic" type="string" value="/control/align_reference/ref_point" />
-        <param name="running" type="bool" value="false"/>
-    </node>
-    <node pkg="cv_detection" name="color_range_detector" type="color_range.py" output="screen">
+        <param name="running" type="bool" value="true"/>
+    </node> -->
+    <!-- <node pkg="cv_detection" name="color_range_detector" type="color_range.py" output="screen">
         <param name="image_topic" type="string" value="/bebop/image_raw" />
         <param name="color" type="string" value="green" />
         <param name="pub_topic" type="string" value="/control/align_reference/ref_point" />
@@ -19,19 +19,18 @@
         <param name="image_topic" type="string" value="/bebop/image_raw" />
         <param name="pub_topic" type="string" value="/control/align_reference/ref_point" />
         <param name="running" type="bool" value="false" />
-    </node>
+    </node> -->
     <node pkg="cv_detection" name="inventory" type="inventory.py" output="screen">
         <param name="image_topic" type="string" value="/bebop/image_raw" />
         <param name="pub_topic" type="string" value="/control/align_reference/ref_point" />
-        <param name="running" type="bool" value="false" />
+        <param name="running" type="bool" value="true" />
     </node>
 
 
-    <!-- <node name="manual_control" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" required="true" launch-prefix="gnome-terminal -e ">
-        <param name="cmd_vel" type="string" value="/bebop/cmd_vel" />
-        
-    </node> -->
-    <!-- <node name="Kill_button" pkg="imav_indoor" type="kill_button.py" required="true" output="screen"/> -->
+    <node name="manual_control" pkg="drone_control" type="teleop_twist_keyboard.py" required="true">
+        <!-- <param name="cmd_vel" type="string" value="/bebop/cmd_vel" /> -->
+    </node>
+
     <node name="Kill_button" pkg="imav_indoor" type="kill_button.py" required="true" output="screen"/>
     
     <!-- <node name="control" pkg="drone_control" required="true" type="control.py" output="screen">
