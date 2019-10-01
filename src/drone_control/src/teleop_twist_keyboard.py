@@ -141,8 +141,12 @@ inventory_state = inventory()
 
 
 sub = rospy.Subscriber("/odom_slam_sf/current_pose", Pose, pose_callback, queue_size=1)
-takeoff_topic = rospy.Publisher("/bebop/takeoff", Empty, queue_size=1)
-land_topic = rospy.Publisher("/bebop/land", Empty, queue_size=1)
+# takeoff_topic = rospy.Publisher("/bebop/takeoff", Empty, queue_size=1)
+takeoff_topic = rospy.Publisher("/tello/takeoff", Empty, queue_size=1)
+
+# land_topic = rospy.Publisher("/bebop/land", Empty, queue_size=1)
+land_topic = rospy.Publisher("/tello/land", Empty, queue_size=1)
+
 read_tag_pub= rospy.Publisher("cv_detection/inventory/read_tag", Empty, queue_size=1)
 running_inventory_pub= rospy.Publisher("cv_detection/inventory/set_runnig_state", Bool, queue_size=1)
 stop_reading_qr_pub= rospy.Publisher("cv_detection/inventory/stop_reading_qr", Empty, queue_size=1)
@@ -154,7 +158,9 @@ running_inventory = True
 if __name__=="__main__":
     settings = termios.tcgetattr(sys.stdin)
 
-    pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size = 1)
+    # pub = rospy.Publisher('/bebop/cmd_vel', Twist, queue_size = 1)
+    pub = rospy.Publisher('/tello/cmd_vel', Twist, queue_size = 1)
+
     rospy.init_node('teleop_twist_keyboard')
     running_inventory_pub.publish(running_inventory)
 
