@@ -51,6 +51,7 @@ class Inventory:
         self.qrs = []
         self.count_tag_reads = 20
         self.tag_reads = []
+        self.reading_qr = False
         print("done")
     # ========================== topics callbacks ==========================
     def set_running_state(self,data):#Bool
@@ -273,7 +274,7 @@ class Inventory:
                 
                 #detect QR
                 
-                if True:#self.reading_qr and not self.shelf_slot == '': # a tag habe been detected
+                if self.reading_qr and not self.shelf_slot == '': # a tag habe been detected
                     decodedObjects = pyzbar.decode(cv_image)
                     cv2.line(cv_image, (0,int(tag_y)), (0,int(tag_y)), (255,0,0), 3)
                     self.display(cv_image,decodedObjects)
@@ -282,12 +283,12 @@ class Inventory:
                         x,y,w,h = obj.rect
                         print("d ",)
                         if y < tag_y-15: #only consider boxes above the shelf slot tag
-                            print('Type : ', obj.type)
-                            print('Data : ', obj.data,'\n')
                             print("above")
                             if not obj.data in self.inventory_data[self.shelf_slot]: #dont repeat qrs
                                 self.inventory_data[self.shelf_slot]+=[obj.data]
                                 self.save_inventory()
+                                print('Type : ', obj.type)
+                                print('Data : ', obj.data,'\n')
                                 print("saved")
 
             k = cv2.waitKey(1)

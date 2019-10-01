@@ -288,7 +288,7 @@ class vso_controler(object): # visual odometry drone controler
                 self.check_aligment()
 
                 adjusted_vel = Twist()
-                max_vel = 0.6
+                max_vel = 0.35
                 if self.positioning_vel[0] >0:
                     adjusted_vel.linear.x = min(max_vel,self.positioning_vel[0])
                 else:
@@ -300,7 +300,7 @@ class vso_controler(object): # visual odometry drone controler
                 if self.positioning_vel[2] >0:
                     adjusted_vel.linear.z = min(max_vel,self.positioning_vel[2])
                 else:
-                    adjusted_vel.linear.y = max(-max_vel,self.positioning_vel[2])
+                    adjusted_vel.linear.z = max(-max_vel,self.positioning_vel[2])
                 
                 adjusted_vel.angular.z = self.positioning_vel[3]
                 
